@@ -1,0 +1,70 @@
+#
+# ps4 forward to traverse NAT
+#
+
+path ../lib/
+
+[load]
+
+filter FORWARD
+ -d 192.168.2.8
+ -j ACCEPT
+
+filter FORWARD
+ -s 192.168.2.8
+ -j ACCEPT
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 80
+
+module forward.firewall load/tcp
+module forward.firewall load/udp
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 443
+
+module forward.firewall load/tcp
+module forward.firewall load/udp
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 5223
+
+module forward.firewall load/tcp
+module forward.firewall load/udp
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 3658
+
+module forward.firewall load/tcp
+module forward.firewall load/udp
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 1935
+
+module forward.firewall load/tcp
+module forward.firewall load/udp
+
+
+[load]
+
+alias interface enp1s0
+alias target 192.168.2.8
+alias port 3478:3480
+
+module forward.firewall load/tcp
+module forward.firewall load/udp

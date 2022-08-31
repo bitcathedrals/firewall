@@ -1,0 +1,94 @@
+# netbox firewall
+
+path /home/mattie/config/firewall/lib/
+
+alias nat-interface enp1s0
+
+[load] "firewall core"
+
+module system.firewall load load/stealth
+module local.firewall load
+
+[load] "spoof protection"
+
+alias interface enp1s0
+
+alias network 127.0.0.0/8
+module spoof.firewall load
+
+alias network 192.168.2.0/24
+module spoof.firewall load
+
+alias network 192.168.3.0/24
+module spoof.firewall load
+
+[load]
+
+module icmp.firewall load load/syslog load/filter
+module tcp.firewall load load/syslog load/filter
+module udp.firewall load load/syslog load/filter load/bind
+
+[load] "dhcp on external"
+
+alias interface enp1s0
+module dhcp.firewall load/client load/filter
+
+[load] "servers on all interfaces"
+
+module ssh.firewall load/server
+
+[load] "castle trusted"
+
+alias network 192.168.2.0/24
+
+module bind.firewall load/server
+module dhcp.firewall load/server
+
+module rsync.firewall load/server
+module proxy.firewall load/server
+
+[load] "tumor semi-trusted"
+
+alias network 192.168.3.0/24
+
+module bind.firewall load/server
+module dhcp.firewall load/server
+module proxy.firewall load/server
+
+#
+# filters
+#
+
+[load] "filter all"
+
+module netbios.firewall load/filter
+module ms-sql.firewall load/filter
+
+[load] "filter external interface"
+
+alias interface enp1s0
+
+module bind.firewall load/filter
+module http.firewall load/filter
+module sunrpc.firewall load/filter
+module telnet.firewall load/filter
+
+module ftp.firewall load/filter
+
+#
+# nat
+#
+
+[load] "start NAT"
+
+module nat.firewall load
+
+alias network 192.168.2.0/24
+module nat.firewall load/forward
+
+alias network 192.168.3.0/24
+module nat.firewall load/forward
+
+[load] "NAT forwarding"
+
+module ps4.firewall load
