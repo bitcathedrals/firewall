@@ -233,20 +233,31 @@ case $1 in
 
     rule -N udp_filter_in
     rule -N udp_filter_out
+
     rule  -A INPUT   -p udp -j udp_filter_in
     rule  -A OUTPUT  -p udp -j udp_filter_out
+
     rule -N udp_con_in
     rule -N udp_con_out
+
     rule  -A INPUT   -p udp -j udp_con_in
     rule  -A OUTPUT  -p udp -j udp_con_out
+
     rule -N udp_srv_in
     rule -N udp_srv_out
+
     rule  -A INPUT   -p udp -j udp_srv_in
     rule  -A OUTPUT  -p udp -j udp_srv_out
+
     rule  -A udp_con_in -p udp  -m state --state ESTABLISHED,RELATED  -j ACCEPT
     rule  -A udp_con_out -p udp  -m state --state ESTABLISHED,RELATED,NEW  -j ACCEPT
-    rule  -A udp_con_in -p udp  --sport domain  -j ACCEPT
+
+    #
+    # DROP all UDP broadcast
+    #
+
     rule  -A INPUT   -p udp  -m pkttype --pkt-type broadcast  -j DROP
+
     rule  -A INPUT   -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
     rule  -A OUTPUT  -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
     rule  -A INPUT   -p udp  -j DROP
@@ -271,13 +282,13 @@ case $1 in
       rule  -A tcp_filter_in -p tcp  --dport ssh  -m connlimit --connlimit-above 20  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: SSH exceeded connection limit\""
       rule  -A tcp_filter_in -p tcp  --dport ssh  -m state --state NEW  -m connlimit --connlimit-above 20  -j DROP
       rule  -A tcp_srv_in -p tcp  --dport ssh  -m state --state NEW  -j ACCEPT
-      rule  -A tcp_srv_in -p tcp  --dport ssh  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: SSH dropping unmatched\""
     fi
 
     if [[ "$FIREWALL_SERVER_DNS" == "yes" ]]
     then
       rule  -A udp_srv_in -p udp  -s $EXTERNAL_NETMASK  --dport domain  -j ACCEPT
       rule  -A udp_srv_out -p udp  -d $EXTERNAL_NETMASK  --sport domain  -j ACCEPT
+
       rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport domain  -m state --state NEW  -j ACCEPT
       rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport domain  -m state --state NEW  -j NFLOG  --nflog-group 3
     fi
@@ -292,6 +303,12 @@ case $1 in
     then
       rule  -A tcp_srv_in -p tcp  -d $EXTERNAL_NETMASK  --dport rsync  -m state --state NEW  -j ACCEPT
       rule  -A tcp_srv_in -p tcp  -d $EXTERNAL_NETMASK  --dport rsync  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: RSYNC dropping unmatched\""
+    fi
+
+    if [[ "$FIREWALL_SERVER_HTTP_LOW" ]]
+    then
+      rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport 80  -m state --state NEW  -j ACCEPT
+      rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport 80  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: http-proxy dropping unmatched\""
     fi
 
     if [[ "$FIREWALL_SERVER_HTTP_HIGH" ]]
