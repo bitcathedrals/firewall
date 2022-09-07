@@ -441,3 +441,5 @@ reload   = re-initialize the firewall
 HELP
   ;;
 esac
+
+exit 0
