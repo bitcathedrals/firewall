@@ -190,9 +190,6 @@ case $1 in
     rule  -A icmp_traffic_in  -p icmp  -m state --state RELATED  -j ACCEPT
     rule  -A icmp_traffic_out -p icmp  -m state --state RELATED  -j ACCEPT
 
-    rule  -A INPUT  -p icmp  -j NFLOG --nflog-group 2  --nflog-prefix="firewall: ICMP no rule for packet"
-    rule  -A OUTPUT -p icmp  -j NFLOG --nflog-group 2  --nflog-prefix="firewall: ICMP no rule for packet"
-
     rule  -A INPUT  -p icmp  -j DROP
     rule -A OUTPUT -p icmp -j DROP
 
