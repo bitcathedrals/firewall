@@ -8,10 +8,10 @@ HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
 echo "firwall.sh: executing for host: $HOST"
 
-if [[ -f /etc/firewall/iptables/$HOST.sh ]]
+if [[ -f /etc/firewall/$HOST.sh ]]
 then
-  echo "firewall.sh: configuring with /etc/firewall/iptables/$HOST.sh"
-  source /etc/firewall/iptables/$HOST.sh ]]
+  echo "firewall.sh: configuring with /etc/firewall/$HOST.sh"
+  source /etc/firewall/$HOST.sh ]]
 fi
 
 if [[ -f $HOME/coding/firewall/iptables/$HOST.sh ]]
