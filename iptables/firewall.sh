@@ -23,14 +23,14 @@ fi
 function rule {
   if [[ ${DEBUG} == "yes" ]]
   then
-    echo "debug: $@"
+    echo "debug: $*"
   fi
 
   eval "iptables $*"
 
   if [[ $? -ne 0 ]]
   then
-    echo "error: $@"
+    echo "error: $*"
   fi;
 }
 
