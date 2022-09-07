@@ -10,8 +10,8 @@ Type=oneshot
 ExecStart=/etc/firewall/firewall.sh load
 
 ExecStop=/etc/firewall/firewall.sh flush
-ExecStop/etc/firewall/firewall.sh delete
-ExecStop/etc/firewall/firewall.sh open
+ExecStop=/etc/firewall/firewall.sh delete
+ExecStop=/etc/firewall/firewall.sh open
 
 [Install]
 
