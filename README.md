@@ -1,15 +1,10 @@
 # FireWall
 
-Firewall is a statefull Linux IPtables firewall that implements the basic Internet
-protocols, and provides intrusion detection, and blacklist support with a default
-DENY policy.
+Firewall is an implementation of advanced firewall practices in Linux Iptables and FreeBSD pf.
 
-It is implemented as a shell script and some aspects are hardcoded such as some network
-addresses.
+It implements the basic Internet protocols, provides intrusion detection, servers, throttling, and blocking.
 
-However with very little work it could be made more configuration driven using a language
-like Python.
+It is implemented as a shell script with parameterization through a per host configuration file.
 
-It does serve as a working example of implementing a multi-chain highly sophisticated firewall
-for Linux.
+Currently the linux iptables firewall is implemented. The pf FreeBSD firewall is coming soon.
 
