@@ -551,9 +551,16 @@ case $1 in
     $0 flush
     $0 load
   ;;
-  *)
-    echo "unknown command $1"
+  "help"|*)
+    cat <<HELP
+firewall.sh
+
+delete   =  delete chains
+flush    = flush chains
+open     = open firewall completely, default accept policy
+load     = load the firewall rules
+unload   = remove firewall rules
+reload   = re-initialize the firewall
+HELP
   ;;
 esac
-
-exit 0
