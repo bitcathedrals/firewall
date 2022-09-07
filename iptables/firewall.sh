@@ -10,11 +10,13 @@ echo "firwall.sh: executing for host: $HOST"
 
 if [[ -f /etc/firewall/iptables/$HOST.sh ]]
 then
+  echo "firewall.sh: configuring with /etc/firewall/iptables/$HOST.sh"
   source /etc/firewall/iptables/$HOST.sh ]]
 fi
 
 if [[ -f $HOME/coding/firewall/iptables/$HOST.sh ]]
 then
+  echo "firewall.sh: configuring with /home/coding/firewall/iptables/$HOST.sh"
   source $HOME/coding/firewall/iptables/$HOST.sh
 fi
 
