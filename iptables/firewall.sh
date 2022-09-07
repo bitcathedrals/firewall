@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 
 #
 # load system configuration and then development configuration
@@ -26,7 +26,7 @@ function rule {
     echo "debug: $@"
   fi
 
-  iptables $@
+  eval "iptables $*"
 
   if [[ $? -ne 0 ]]
   then
