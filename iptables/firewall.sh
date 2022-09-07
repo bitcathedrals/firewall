@@ -133,48 +133,68 @@ case $1 in
     rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $LOOPBACK_NETMASK  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: spoof attempt\""
     rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $LOOPBACK_NETMASK  -j DROP
 
-
-    rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $EXTERNAL_NETMASK  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: spoof attempt\""
-    rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $EXTERNAL_NETMASK  -j DROP
-
     #
     # icmp
     #
 
     rule -N icmp_filter_in
     rule -N icmp_filter_out
+
     rule -N icmp_traffic_in
     rule -N icmp_traffic_out
+
     rule  -A INPUT  -p icmp -j icmp_filter_in
     rule  -A OUTPUT -p icmp -j icmp_filter_out
+
     rule  -A INPUT  -p icmp -j icmp_traffic_in
     rule  -A OUTPUT -p icmp -j icmp_traffic_out
+
+    #
+    # drop all broadcast traffic
+    #
+
     rule  -A icmp_filter_in  -p icmp  -m pkttype --pkt-type broadcast  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
     rule  -A icmp_filter_in  -p icmp  -m pkttype --pkt-type broadcast  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
     rule  -A icmp_filter_in  -p icmp  -m pkttype --pkt-type broadcast  -j DROP
     rule  -A icmp_filter_in  -p icmp  -m pkttype --pkt-type broadcast  -j DROP
+
+    #
+    # filter odd stuff
+    #
+
     rule  -A icmp_filter_in  -p icmp  --icmp-type timestamp-request  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix="\"firewall: ICMP strange\""
     rule  -A icmp_filter_in  -p icmp  --icmp-type timestamp-reply  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix="\"firewall: ICMP strange\""
     rule  -A icmp_filter_in  -p icmp  --icmp-type address-mask-request  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix="\"firewall: ICMP strange\""
     rule  -A icmp_filter_out -p icmp  --icmp-type address-mask-reply  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix="\"firewall: ICMP strange\""
+
     rule  -A icmp_filter_in  -p icmp  --icmp-type timestamp-request  -j DROP
     rule  -A icmp_filter_in  -p icmp  --icmp-type timestamp-reply  -j DROP
     rule  -A icmp_filter_in  -p icmp  --icmp-type address-mask-request  -j DROP
     rule  -A icmp_filter_out -p icmp  --icmp-type address-mask-reply  -j DROP
+
+    #
+    # ping handling with throttling
+    #
+
     rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 8\/second --limit-burst 24  -j ACCEPT
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 8\/second --limit-burst 24  -j ACCEPT
+    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+
     rule  -A icmp_traffic_out -p icmp  --icmp-type echo-request  -j ACCEPT
     rule  -A icmp_traffic_out -p icmp  --icmp-type echo-reply  -j ACCEPT
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP high rate\""
+
     rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP high rate\""
+
     rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -j DROP
     rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -j DROP
+
     rule  -A icmp_traffic_in  -p icmp  -m state --state RELATED  -j ACCEPT
     rule  -A icmp_traffic_out -p icmp  -m state --state RELATED  -j ACCEPT
-    rule  -A icmp_traffic_out -p icmp  -m state --state NEW  -j ACCEPT
+
     rule  -A INPUT  -p icmp  -j NFLOG --nflog-group 2  --nflog-prefix="firewall: ICMP no rule for packet"
     rule  -A OUTPUT -p icmp  -j NFLOG --nflog-group 2  --nflog-prefix="firewall: ICMP no rule for packet"
+
     rule  -A INPUT  -p icmp  -j DROP
+    rule -A OUTPUT -p icmp -j DROP
 
     #
     # tcp protocol
