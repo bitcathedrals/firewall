@@ -6,6 +6,8 @@
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
+echo "firwall.sh: executing for host: $HOST"
+
 if [[ -f /etc/firewall/iptables/$HOST.sh ]]
 then
   source /etc/firewall/iptables/$HOST.sh ]]
