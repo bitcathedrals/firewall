@@ -21,8 +21,6 @@ then
 fi
 
 function rule {
-  shift
-
   if [[ ${DEBUG} == "yes" ]]
   then
     echo "debug: $@"
