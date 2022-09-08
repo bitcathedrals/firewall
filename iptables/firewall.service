@@ -1,14 +1,15 @@
 [Unit]
 
-Description=Firewall
+Description=firewall - advanced IPtables Firewall
 After=ulogd.service
 
 [Service]
-
 Type=oneshot
+RemainAfterExit=yes
 
-ExecStart=/home/mattie/config/firewall/netbox/firewall.sh load
-#ExecStop=/home/mattie/config/firewall/netbox/firewall.sh unload
+ExecStart=/etc/firewall/firewall.sh load
+ExecReload=/etc/firewall/firewall.sh reload
+ExecStop=/etc/firewall/firewall.sh stop
 
 [Install]
 
