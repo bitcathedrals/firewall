@@ -227,19 +227,15 @@ case $1 in
     rule  -A tcp_con_in -p tcp  --tcp-flags ACK ACK  -j ACCEPT
     rule  -A tcp_con_out -p tcp  --tcp-flags ACK ACK  -j ACCEPT
 
-    if [[ "$FIREWALL_OUTBOUND_ALL" == "yes" ]]
-    then
-      rule  -A tcp_con_out -p tcp  -m state --state NEW  -j ACCEPT
-    fi
-
     #
     # disable tcp broadcast.
     #
 
-    rule  -A INPUT   -p tcp  -m pkttype --pkt-type broadcast  -j DROP
-    rule  -A INPUT   -p tcp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule  -A OUTPUT  -p tcp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule  -A INPUT   -p tcp  -j DROP
+    rule  -A INPUT   -p tcp -m pkttype --pkt-type broadcast -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP broadcast drop\""
+    rule  -A INPUT   -p tcp -m pkttype --pkt-type broadcast  -j DROP
+
+    rule  -A OUTPUT  -p tcp -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP no matching rule\""
+    rule  -A INPUT   -p tcp -j DROP
 
     #
     # udp protocol
@@ -269,16 +265,16 @@ case $1 in
     if [[ "$FIREWALL_OUTBOUND_ALL" == "yes" ]]
     then
       rule  -A udp_con_out -p udp -m state --state  NEW  -j ACCEPT
+      rule  -A tcp_con_out -p tcp -m state --state  NEW  -j ACCEPT
     fi
 
     #
     # DROP all UDP broadcast
     #
-
+    rule  -A INPUT   -p udp  -m pkttype --pkt-type broadcast -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP broadcast drop\"" -j DROP
     rule  -A INPUT   -p udp  -m pkttype --pkt-type broadcast  -j DROP
 
     rule  -A INPUT   -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
-    rule  -A OUTPUT  -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
     rule  -A INPUT   -p udp  -j DROP
 
     #
@@ -290,6 +286,28 @@ case $1 in
       rule  -A udp_filter_in -p udp  -i $EXTERNAL_INTERFACE  -s 0.0.0.0  --sport 67  -m pkttype --pkt-type broadcast  -j DROP
       rule  -A udp_con_out -p udp  -o $EXTERNAL_INTERFACE  --dport 67  -j ACCEPT
       rule  -A udp_con_in -p udp  -i $EXTERNAL_INTERFACE  ! -s 0.0.0.0  --sport 67  -m pkttype --pkt-type broadcast  -j ACCEPT
+    fi
+
+    if [[ "$FIREWALL_CLIENT_DOMAIN" == "yes" ]]
+    then
+      rule  -A udp_con_out -p udp  --dport domain  -m state --state NEW -j ACCEPT
+      rule  -A tcp_con_out -p tcp  --dport domain  -m state --state NEW -j ACCEPT
+    fi
+
+    if [[ "$FIREWALL_CLIENT_NTP" == "yes" ]]
+    then
+      rule  -A udp_con_out -p udp  --dport ntp  -m state --state NEW -j ACCEPT
+      rule  -A tcp_con_out -p tcp  --dport ntp  -m state --state NEW -j ACCEPT
+    fi
+
+    if [[ "$FIREWALL_CLIENT_HTTP" == "yes" ]]
+    then
+      rule  -A tcp_con_out -p tcp  --dport http  -m state --state NEW -j ACCEPT
+    fi
+
+    if [[ "$FIREWALL_CLIENT_SSL" == "yes" ]]
+    then
+      rule  -A tcp_con_out -p tcp  --dport https  -m state --state NEW -j ACCEPT
     fi
 
     #
@@ -350,6 +368,14 @@ case $1 in
       rule  -A tcp_filter_in -p tcp  --dport 8080 -m state --state NEW -m connlimit --connlimit-above $FIREWALL_SERVICE_CAP  -j DROP
 
       rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport 8080  -m state --state NEW  -j ACCEPT
+    fi
+
+    if [[ "$FIREWALL_SERVER_HTTP_SSL" == "yes" ]]
+    then
+      rule  -A tcp_filter_in -p tcp  --dport https  -m connlimit --connlimit-above $FIREWALL_SERVICE_CAP  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: https high exceeded connection limit\""
+      rule  -A tcp_filter_in -p tcp  --dport https -m state --state NEW -m connlimit --connlimit-above $FIREWALL_SERVICE_CAP  -j DROP
+
+      rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport https  -m state --state NEW  -j ACCEPT
     fi
 
     #
