@@ -176,8 +176,11 @@ case $1 in
     # ping handling with throttling
     #
 
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 8\/second --limit-burst 24  -j ACCEPT
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+    if [[ -z "$FIREWALL_PING_STEALTH" ]]
+    then
+      rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 8\/second --limit-burst 24  -j ACCEPT
+      rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+    fi
 
     rule  -A icmp_traffic_out -p icmp  --icmp-type echo-request  -j ACCEPT
     rule  -A icmp_traffic_out -p icmp  --icmp-type echo-reply  -j ACCEPT
