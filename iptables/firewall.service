@@ -4,14 +4,11 @@ Description=firewall - advanced IPtables Firewall
 After=ulogd.service
 
 [Service]
-
 Type=oneshot
 
 ExecStart=/etc/firewall/firewall.sh load
-
-ExecStop=/etc/firewall/firewall.sh flush
-ExecStop=/etc/firewall/firewall.sh delete
-ExecStop=/etc/firewall/firewall.sh open
+ExecReload=/etc/firewall/firewall.sh reload
+ExecStop=/etc/firewall/firewall.sh stop
 
 [Install]
 

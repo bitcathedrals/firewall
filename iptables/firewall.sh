@@ -426,6 +426,11 @@ case $1 in
     $0 delete
     $0 load
   ;;
+  "stop")
+    $0 flush
+    $0 delete
+    $0 open
+  ;;
   "help"|*)
     cat <<HELP
 firewall.sh
@@ -435,6 +440,7 @@ flush    = flush chains
 open     = open firewall completely, default accept policy
 load     = load the firewall rules
 reload   = re-initialize the firewall
+stop     = stop the firewall, will completely remove firewall
 HELP
   ;;
 esac
