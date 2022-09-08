@@ -322,6 +322,12 @@ case $1 in
       rule  -A tcp_filter_in -p tcp  --dport $FIREWALL_SSH_PORT  -m connlimit --connlimit-above $FIREWALL_SSH_CAP  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: SSH exceeded connection limit\""
       rule  -A tcp_filter_in -p tcp  --dport $FIREWALL_SSH_PORT  -m state --state NEW  -m connlimit --connlimit-above $FIREWALL_SSH_CAP  -j DROP
       rule  -A tcp_srv_in -p tcp  --dport $FIREWALL_SSH_PORT  -m state --state NEW -j ACCEPT
+
+      if [[ -n $FIREWALL_SSH_PORT ]]
+      then
+        rule -A tcp_filter_in -p tcp --dport ssh -m state --state NEW -j NFLOG --nflog-gropu 3 --nflog-prefix "\"firewall: SSH connection on standard SSH port\""
+        rule -A tcp_filter_in -p tcp --dport ssh -m state --state NEW -j DROP
+      fi
     fi
 
     if [[ "$FIREWALL_SERVER_DNS" == "yes" ]]
