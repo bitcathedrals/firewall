@@ -6,7 +6,7 @@
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
-echo "firwall.sh: executing for host: $HOST"
+echo "firewall.sh: executing for host: $HOST"
 
 if [[ -f /etc/firewall/$HOST.sh ]]
 then
