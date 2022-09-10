@@ -82,8 +82,8 @@ fi
 if [[ $FIREWALL_DHCP ==  "yes" ]]
 then
   cat <<DHCP
-pass in proto udp to port dhcp
-pass out proto udp from port dhcp
+pass out proto udp to port dhcp
+pass in proto udp from port dhcp
 DHCP
 fi
 
