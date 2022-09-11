@@ -27,10 +27,12 @@ fi
 function open_client {
   if [[ $1 == "yes" ]]
   then
-    cat <<CLIENT
+    # get the ip from the network portion
+    ip=`ifconfig | grep $3 | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 3`
 
-pass inet out proto $4 from $3 to any port $5
-pass inet in proto $4 from any port $5 to $3
+    cat <<CLIENT
+pass out proto $4 from $ip to any port $5
+pass in proto $4 from any port $ip to $ip
 CLIENT
 fi
 }
@@ -44,13 +46,16 @@ fi
 # 4 = proto
 # 5 = port
 
+
 function open_server {
   if [[ $1 == "yes" ]]
   then
-    cat <<SERVER
+    # get the ip from the network portion
+    ip=`ifconfig | grep $3 | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 3`
 
-pass out proto $4 from $3 port $5 to any
-pass in proto $4 from any to $3 port $5
+    cat <<SERVER
+pass out proto $4 from $ip port $5 to any
+pass in proto $4 from any to $ip port $5
 SERVER
 fi
 }
@@ -61,7 +66,6 @@ block in all
 DEFAULT_POLICY
 
 cat <<LOOPBACK
-
 pass on lo to 127.0.0.0/8
 pass from 127.0.0.0/8 to lo
 
@@ -69,7 +73,6 @@ antispoof for lo
 LOOPBACK
 
 cat <<ICMP
-
 pass out proto icmp to any keep state
 pass in proto icmp from any
 ICMP
@@ -77,7 +80,6 @@ ICMP
 if [[ $FIREWALL_BLACKLIST == "yes" ]]
 then
   cat <<BLACKLIST
-
 anchor blacklistd/* in
 BLACKLIST
 fi
@@ -85,12 +87,10 @@ fi
 if [[ $FIREWALL_OUTBOUND_ALL == "yes" ]]
 then
   cat <<OUTBOUND
-
 pass out proto { tcp, udp } keep state
 OUTBOUND
 else
   cat <<OUTBOUND
-
 block out all proto { tcp, udp }
 OUTBOUND
 fi

@@ -32,8 +32,12 @@ fi
 
 case $1 in
   "onestart")
+    sudo kldload pf
     sudo service pflog onestart
     sudo service pf onestart
+  ;;
+  "flush")
+    sudo pfctl -F all
   ;;
   "disable")
     sudo pfctl -d
@@ -105,6 +109,7 @@ CONF
 bsd.sh
 
 onestart              = start pf services without global configuration
+flush                 = flush all firewall rules
 disable               = disable packet filter
 enable                = enable the packet filter
 stable                = load stable version of packet filter
