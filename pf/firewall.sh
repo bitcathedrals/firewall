@@ -79,8 +79,10 @@ ICMP
 
 if [[ $FIREWALL_BLACKLIST == "yes" ]]
 then
+  interface=`ifconfig | grep -B3 $BLACKLIST_NETWORK | head -n 1 | cut -d ':' -f 1`
+
   cat <<BLACKLIST
-anchor blacklistd/* in
+anchor "blacklistd/*" in on $interface
 BLACKLIST
 fi
 
