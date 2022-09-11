@@ -237,7 +237,7 @@ case $1 in
     rule  -A INPUT   -p tcp -m pkttype --pkt-type broadcast -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP broadcast drop\""
     rule  -A INPUT   -p tcp -m pkttype --pkt-type broadcast  -j DROP
 
-    rule  -A OUTPUT  -p tcp -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP no matching rule\""
+    rule  -A OUTPUT  -p tcp -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: TCP no matching rule\""
     rule  -A INPUT   -p tcp -j DROP
 
     #
@@ -262,6 +262,9 @@ case $1 in
     rule  -A INPUT   -p udp -j udp_srv_in
     rule  -A OUTPUT  -p udp -j udp_srv_out
 
+    rule  -A INPUT   -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
+    rule  -A INPUT   -p udp  -j DROP
+
     rule  -A udp_con_in -p udp  -m state --state ESTABLISHED,RELATED  -j ACCEPT
     rule  -A udp_con_out -p udp  -m state --state ESTABLISHED,RELATED  -j ACCEPT
 
@@ -274,11 +277,8 @@ case $1 in
     #
     # DROP all UDP broadcast
     #
-    rule  -A INPUT   -p udp  -m pkttype --pkt-type broadcast -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP broadcast drop\"" -j DROP
-    rule  -A INPUT   -p udp  -m pkttype --pkt-type broadcast  -j DROP
-
-    rule  -A INPUT   -p udp  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: UDP no rule for packet\""
-    rule  -A INPUT   -p udp  -j DROP
+    rule  -A INPUT -p udp  -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP broadcast drop\""
+    rule  -A INPUT -p udp  -m pkttype --pkt-type broadcast  -j DROP
 
     #
     # clients
@@ -325,7 +325,7 @@ case $1 in
 
       if [[ -n $FIREWALL_SSH_PORT ]]
       then
-        rule -A tcp_filter_in -p tcp --dport ssh -m state --state NEW -j NFLOG --nflog-gropu 3 --nflog-prefix "\"firewall: SSH connection on standard SSH port\""
+        rule -A tcp_filter_in -p tcp --dport ssh -m state --state NEW -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: SSH connection on standard SSH port\""
         rule -A tcp_filter_in -p tcp --dport ssh -m state --state NEW -j DROP
       fi
     fi
