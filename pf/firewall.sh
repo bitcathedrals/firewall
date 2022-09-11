@@ -158,25 +158,25 @@ open_server $FIREWALL_INTERNAL_HTTP \
             tcp \
             http
 
-open_server $FIREWALL_EXTERNAL_HTTP \
+open_server $FIREWALL_EXTERNAL_HTTPS \
             HTTPS:443 \
             $EXTERNAL_NETWORK \
             tcp \
             https
 
-open_server $FIREWALL_INTERNAL_HTTP \
+open_server $FIREWALL_INTERNAL_HTTPS \
             HTTPS:443 \
             $INTERNAL_NETWORK \
             tcp \
             https
 
-open_server $FIREWALL_EXTERNAL_HTTP \
+open_server $FIREWALL_EXTERNAL_HTTP_PROXY \
             HTTP:8080 \
             $EXTERNAL_NETWORK \
             tcp \
             8080
 
-open_server $FIREWALL_INTERNAL_HTTP \
+open_server $FIREWALL_INTERNAL_HTTP_PROXY \
             HTTP:8080 \
             $INTERNAL_NETWORK \
             tcp \
