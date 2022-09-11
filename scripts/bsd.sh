@@ -1,60 +1,125 @@
 #! /usr/bin/env bash
 
-DEV=/home/mattie/coding/firewall/pf/
+HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
+
+REPO=$HOME/coding/firewall/pf
+CONFIG=$REPO/${HOST}.sh
+
+FIREWALL="$REPO/firewall.sh"
+
+STABLE=/etc/pf.conf
+DEV=$REPO/pf.conf
+
+BLACKLIST=/etc/blacklistd.conf
+RC=/etc/rc.conf
+
+if [[ -f $CONFIG ]]
+then
+  echo >/dev/stderr "bsd.sh: loading firewall config: $CONFIG"
+  source $CONFIG
+else
+  echo >/dev/stderr "bsd.sh: could not locate host config $CONFIG, aborting!"
+  exit 1
+fi
+
+if [[ -f $FIREWALL ]]
+then
+  echo >/dev/stderr "bsd.sh: loading firewall: $FIREWALL"
+else
+  echo >/dev/stderr "bsd.sh: could not locate firewall: $FIREWALL, aborting!"
+  exit 1
+fi
 
 case $1 in
+  "onestart")
+    sudo kldload pf
+    sudo service pflog onestart
+    sudo service pf onestart
+  ;;
+  "flush")
+    sudo pfctl -F all
+  ;;
   "disable")
-    pfctl -d
+    sudo pfctl -d
   ;;
   "enable")
-    pfctl -e
+    sudo pfctl -e
   ;;
   "stable")
-    pfctl -ef /etc/pf.conf
-  ;;
+    sudo pfctl -ef $STABLE
   ;;
   "dev")
-    $FIREWALL/firewall.sh >$FIREWALL/pf.conf
-    pfctl -ef $FIREWALL/pf.conf
+    $FIREWALL >$DEV
+    sudo pfctl -ef $DEV
   ;;
   "check")
-    $FIREWALL/firewall.sh >$FIREWALL/pf.conf
-    pfctl -nef $FIREWALL/pf.conf
+    $FIREWALL >$DEV
+    pfctl -vnf $DEV
   ;;
   "install")
-    $FIREWALL/firewall.sh >/etc/pf.conf
+    sudo $FIREWALL >$STABLE
   ;;
   "info")
-    pfctl -s info
+    sudo pfctl -s info
   ;;
-  "blacklist-conf")
-cat >>/etc/blacklistd.conf <<CONF
+  "restart")
+    if [[ $FIREWALL_BLACKLIST == "yes" ]]
+    then
+      sudo service blacklistd restart
+    fi
+
+    sudo service sshd restart
+
+    if [[ $2 == "dev" ]]
+    then
+      sudo pf -ef $DEV
+    else
+      sudo pf -ef $STABLE
+    fi
+
+    sudo service pflog restart
+    sudo service pf restart
+  ;;
+  "dev")
+    $0 restart dev
+  ;;
+  "stable")
+    $0 restart stable
+  ;;
+  "blacklist")
+    sudo cat >>$BLACKLIST <<CONF
 [local]
 ssh stream * * * 3 24h
 CONF
 
-cat >>/etc/rc.conf <<CONF
+    sudo cat >>$RC <<CONF
 blacklist_enable="YES"
 CONF
   ;;
-  "pf-conf")
-cat >>/etc/rc.conf <<CONF
+  "pf")
+    sudo cat >>$RC <<CONF
 pf_enable="YES"
 pflog_enable="YES"
 CONF
+
+    $0 restart stable
   ;;
   "help"|*)
-    cat <<HELP
+    cat >/dev/stderr <<HELP
 bsd.sh
 
-disable         =  disable packet filter
-enable          =  enable the packet filter
-stable          =  load stable version of packet filter
-dev             =  load development version of packet filter
-check           = check syntax of the packet filter
-install         = install the development firewall into /etc/
-info            = show pf info
-blacklist-conf  = update the blacklist.conf file
-pf-conf         = update rc.conf to load firewall
+onestart              = start pf services without global configuration
+flush                 = flush all firewall rules
+disable               = disable packet filter
+enable                = enable the packet filter
+stable                = load stable version of packet filter
+dev                   = load development version of packet filter
+check                 = check syntax of the packet filter
+restart <dev|stable>  = restart stable firewall and related services
+install               = install the development firewall into /etc/
+info                  = show pf info
+blacklist             = update the blacklist.conf file
+pf                    = update rc.conf to load firewall
 HELP
+  ;;
 esac
