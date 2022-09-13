@@ -60,7 +60,7 @@ case $1 in
     sudo $FIREWALL >$STABLE
   ;;
   "info")
-    sudo pfctl -s info
+    sudo pfctl -sr info
   ;;
   "restart")
     if [[ $FIREWALL_BLACKLIST == "yes" ]]
