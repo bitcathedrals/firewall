@@ -19,16 +19,26 @@ then
   echo >/dev/stderr "bsd.sh: loading firewall config: $CONFIG"
   source $CONFIG
 else
-  echo >/dev/stderr "bsd.sh: could not locate host config $CONFIG, aborting!"
-  exit 1
+  if [[ $1 == "pf" ]] || [[ $1 == "blacklist" ]] || [[ $1 == "blackhole" ]]
+  then
+    echo >/dev/stderr "bsd.sh skipping config load for root command $1"
+  else
+    echo >/dev/stderr "bsd.sh: could not locate host config $CONFIG, aborting!"
+    exit 1
+  fi
 fi
 
 if [[ -f $FIREWALL ]]
 then
   echo >/dev/stderr "bsd.sh: loading firewall: $FIREWALL"
 else
-  echo >/dev/stderr "bsd.sh: could not locate firewall: $FIREWALL, aborting!"
-  exit 1
+  if [[ $1 == "pf" ]] || [[ $1 == "blacklist" ]] || [[ $1 == "blackhole" ]]
+  then
+    echo >/dev/stderr "bsd.sh skipping config load for root command $1"
+  else
+    echo >/dev/stderr "bsd.sh: could not locate firewall -> $FIREWALL, aborting!"
+    exit 1
+  fi
 fi
 
 case $1 in
@@ -100,8 +110,9 @@ case $1 in
   ;;
   "info")
     echo /dev/stderr "bsd.sh: list information on sockets and firewall rules."
-    sockstat -4
-    sudo pfctl -sa
+
+    sudo sockstat -4
+    sudo pfctl -sr
   ;;
   "restart")
     echo /dev/stderr "bsd.sh: restarting all firewall services,"
@@ -134,16 +145,11 @@ case $1 in
     $0 restart stable
   ;;
   "blacklist")
-    if [[ $FIREWALL_BLACKLIST == "yes" ]]
+    if grep -v blacklistd_enable $RC
     then
-      if grep -v blacklistd_enable $RC
-      then
-        sudo cat >>$RC <<CONF
-sysrc blacklistd_enable="YES"
+      cat >>$RC <<CONF
+blacklistd_enable="YES"
 CONF
-      fi
-    else
-      echo /dev/stderr "bsd.sh: skipping disabled blacklist configuration."
     fi
   ;;
   "blackhole")
@@ -151,7 +157,7 @@ CONF
 
     if grep -v net.inet.tcp.blackhole $SYSCTL && grep -v net.inet.tcp.blackhole $SYSCTL
     then
-      sudo cat >>$SYSCTL <<CONF
+      cat >>$SYSCTL <<CONF
 net.inet.tcp.blackhole=2
 net.inet.udp.blackhole=1
 CONF
@@ -162,7 +168,7 @@ CONF
 
     if grep -v pf_enable $RC && grep -v pflog_enable $RC
     then
-      sudo cat >>$RC <<CONF
+      cat >>$RC <<CONF
 pf_enable="YES"
 pflog_enable="YES"
 CONF
