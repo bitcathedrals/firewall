@@ -1,5 +1,5 @@
 #
-# devil.sh config file
+# freebsd.sh config file
 #
 
 EXTERNAL_NETWORK="10.211.55"
@@ -16,4 +16,3 @@ FIREWALL_BLACKLIST="yes"
 BLACKLIST_NETWORK="10.211.55"
 
 FIREWALL_BLACKHOLE="yes"
-
