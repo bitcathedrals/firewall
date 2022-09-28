@@ -387,6 +387,14 @@ case $1 in
       rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport https  -m state --state NEW  -j ACCEPT
     fi
 
+    if [[ "$FIREWALL_SERVER_XRDP" == "yes" ]]
+    then
+      rule  -A tcp_filter_in -p tcp  --dport $FIREWALL_XRDP_PORT  -m connlimit --connlimit-above $FIREWALL_SERVICE_CAP  -m state --state NEW  -j NFLOG  --nflog-group 3  --nflog-prefix "\"firewall: https high exceeded connection limit\""
+      rule  -A tcp_filter_in -p tcp  --dport $FIREWALL_XRDP_PORT -m state --state NEW -m connlimit --connlimit-above $FIREWALL_SERVICE_CAP  -j DROP
+
+      rule  -A tcp_srv_in -p tcp  -s $EXTERNAL_NETMASK  --dport $FIREWALL_XRDP_PORT  -m state --state NEW  -j ACCEPT
+    fi
+
     #
     # blocks
     #
