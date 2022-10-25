@@ -149,6 +149,9 @@ case $1 in
     rule  -A INPUT  -p icmp -j icmp_traffic_in
     rule  -A OUTPUT -p icmp -j icmp_traffic_out
 
+    rule -A INPUT  -p icmp  -j DROP
+    rule -A OUTPUT -p icmp -j DROP
+
     #
     # drop all broadcast traffic
     #
@@ -173,28 +176,28 @@ case $1 in
     rule  -A icmp_filter_out -p icmp  --icmp-type address-mask-reply  -j DROP
 
     #
+    # icmp stateful
+    #
+
+    rule  -A icmp_traffic_in  -p icmp  -m state --state RELATED  -j ACCEPT
+    rule  -A icmp_traffic_out -p icmp  -m state --state RELATED  -j ACCEPT
+
+    #
     # ping handling with throttling
     #
 
-    if [[ -z "$FIREWALL_PING_STEALTH" ]]
+    rule  -A icmp_traffic_out -p icmp --icmp-type echo-request  -j ACCEPT
+    rule  -A icmp_traffic_out -p icmp --icmp-type echo-reply  -j ACCEPT
+
+    if [[ "$FIREWALL_PING_PASS" == "yes" ]]
     then
       rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 8\/second --limit-burst 24  -j ACCEPT
       rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
     fi
 
-    rule  -A icmp_traffic_out -p icmp  --icmp-type echo-request  -j ACCEPT
-    rule  -A icmp_traffic_out -p icmp  --icmp-type echo-reply  -j ACCEPT
+    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP high echo request rate\""
 
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP high rate\""
-
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -j DROP
-    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-request  -j DROP
-
-    rule  -A icmp_traffic_in  -p icmp  -m state --state RELATED  -j ACCEPT
-    rule  -A icmp_traffic_out -p icmp  -m state --state RELATED  -j ACCEPT
-
-    rule  -A INPUT  -p icmp  -j DROP
-    rule -A OUTPUT -p icmp -j DROP
+    rule  -A icmp_traffic_in  -p icmp  --icmp-type echo-reply  -m limit --limit 24\/minute  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP high echo reply rate\""
 
     #
     # tcp protocol
