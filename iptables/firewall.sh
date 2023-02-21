@@ -36,82 +36,83 @@ function close_policy {
 };
 
 function icmp_core {
-    #
-    # pass connection related
-    #
+  #
+  # pass connection related
+  #
 
-    rule  -A icmp_traffic_in  -p icmp -i $1 -m state --state RELATED  -j ACCEPT
-    rule  -A icmp_traffic_out -p icmp -i $1 -m state --state RELATED  -j ACCEPT;
+  rule  -A icmp_traffic_in  -p icmp -i $1 -m state --state RELATED  -j ACCEPT
+  rule  -A icmp_traffic_out -p icmp -i $1 -m state --state RELATED  -j ACCEPT;
 
-    #
-    # allow outbound ping
-    #
+  #
+  # allow outbound ping
+  #
 
-    rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-request -j ACCEPT
-    rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-reply -j ACCEPT;
+  rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-request -j ACCEPT
+  rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-reply -j ACCEPT;
 };
 
 
 function icmp_block_broadcast {
-    #
-    # drop all broadcast traffic
-    #
+  #
+  # drop all broadcast traffic
+  #
 
-    rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
-    rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -j DROP
+  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
+  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -j DROP
 };
 
 function icmp_block_strange {
-    #
-    # log odd ICMP
-    #
+  #
+  # log odd ICMP
+  #
 
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type timestamp-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type timestamp-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type address-mask-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type address-mask-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type timestamp-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type timestamp-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type address-mask-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type address-mask-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
 
-    #
-    # drop odd ICMP
-    #
+  #
+  # drop odd ICMP
+  #
 
-    rule -A icmp_filter_in  -p icmp -i $1 --icmp-type timestamp-request -j DROP
-    rule -A icmp_filter_in  -p icmp -i $1 --icmp-type timestamp-reply -j DROP
-    rule -A icmp_filter_in  -p icmp -i $1 --icmp-type address-mask-request -j DROP
-    rule -A icmp_filter_out -p icmp -o $1 --icmp-type address-mask-reply -j DROP;
+  rule -A icmp_filter_in  -p icmp -i $1 --icmp-type timestamp-request -j DROP
+  rule -A icmp_filter_in  -p icmp -i $1 --icmp-type timestamp-reply -j DROP
+  rule -A icmp_filter_in  -p icmp -i $1 --icmp-type address-mask-request -j DROP
+  rule -A icmp_filter_out -p icmp -o $1 --icmp-type address-mask-reply -j DROP;
 };
 
 function ping_throttle {
-      rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
-      rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+  rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+  rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
 
-      rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -j DROP
-      rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -j DROP;
+  rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -j DROP
+  rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -j DROP;
 };
 
 function ping_block {
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-reply  -j DROP
-    rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-request  -j DROP;
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-reply  -j DROP
+  rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-request  -j DROP;
 };
 
 
 function tcp_core {
-    #
-    # tcp connection state
-    #
+  #
+  # tcp connection state
+  #
 
-    rule -A tcp_con_in -p tcp -i $1 -m state --state ESTABLISHED -j ACCEPT
-    rule -A tcp_con_out -p tcp -o $1 -m state --state ESTABLISHED -j ACCEPT
+  rule -A tcp_con_in -p tcp -i $1 -m state --state ESTABLISHED -j ACCEPT
+  rule -A tcp_con_out -p tcp -o $1 -m state --state ESTABLISHED -j ACCEPT
 
-    rule -A tcp_con_in -p tcp -i $1  -m state --state RELATED -j ACCEPT
-    rule -A tcp_con_out -p tcp -o $1 -m state --state RELATED -j ACCEPT
+  rule -A tcp_con_in -p tcp -i $1  -m state --state RELATED -j ACCEPT
+  rule -A tcp_con_out -p tcp -o $1 -m state --state RELATED -j ACCEPT
 
-    rule -A tcp_con_in -p tcp -i $1 -m conntrack --ctstatus SEEN_REPLY --tcp-flags SYN,ACK,FIN,RST ACK,SYN -j ACCEPT
+  rule -A tcp_con_in -p tcp -i $1 -m conntrack --ctstatus SEEN_REPLY --tcp-flags SYN,ACK,FIN,RST ACK,SYN -j ACCEPT
 
-    rule -A tcp_con_in -p tcp -i $1 --tcp-flags RST RST -j ACCEPT
-    rule -A tcp_con_out -p tcp -o $1 --tcp-flags RST RST -j ACCEPT
-    rule -A tcp_con_in -p tcp -i $1 --tcp-flags ACK ACK -j ACCEPT
-    rule -A tcp_con_out -p tcp -o $1 --tcp-flags ACK ACK -j ACCEPT;
+  rule -A tcp_con_in -p tcp -i $1 --tcp-flags RST RST -j ACCEPT
+  rule -A tcp_con_out -p tcp -o $1 --tcp-flags RST RST -j ACCEPT
+
+  rule -A tcp_con_in -p tcp -i $1 --tcp-flags ACK ACK -j ACCEPT
+  rule -A tcp_con_out -p tcp -o $1 --tcp-flags ACK ACK -j ACCEPT;
 };
 
 function tcp_any_out {
@@ -119,12 +120,12 @@ function tcp_any_out {
 };
 
 function tcp_disable_broadcast {
-    #
-    # disable tcp broadcast.
-    #
+  #
+  # disable tcp broadcast.
+  #
 
-    rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP broadcast drop\""
-    rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -j DROP;
+  rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP broadcast drop\""
+  rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -j DROP;
 };
 
 
@@ -196,7 +197,6 @@ case $1 in
     close_policy
   ;;
   "init")
-
     #
     # system configuratino
     #
