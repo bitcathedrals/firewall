@@ -104,18 +104,39 @@ case $1 in
   "load")
     doas pfctl -f /etc/pf.conf
   ;;
+  "enable")
+    doas pfctl -e
+  ;;
+  "enable")
+    doas pfctl -d
+  ;;
+  "rules")
+    doas pfctl -P -N -s rules
+  ;;
+  "stat")
+    doas pfctl -P -N -s all
+  ;;
+  "interfacce")
+    doas pfctl -P -N -i $1 -s all
+  ;;
   "help")
     cat <<HELP
 openbsd.sh firewall
 
 help   = command reference
 
-update = generate a new firewall
-test   = test firewall
+update    = generate a new firewall
+test      = test firewall
 
-flush  = flush rules and state
+flush     = flush rules and state
 
-load   = load the firewall
+load      = load the firewall
+disable   = disable the firewall
+enable    = enable the firewall
+
+rules     = show loaded rules
+stat      = show all rules and state
+interface = show all rules and state on INTERFACE
 HELP
   ;;
 esac
