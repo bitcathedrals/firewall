@@ -48,7 +48,19 @@ open_out $wifi tcp "{ 194 , 6697 }"
 
 # ssh server
 
-open_server $wifi tcp 6666
+open_server_throttle $wifi tcp 6666 10 "5/10"
+
+# block ftp
+block_stealth $wifi tcp 21
+
+# block telnet
+block_stealth $wifi tcp 23
+
+# block rpc
+block_stealth $wifi "{ tcp , udp }" 111
+
+# block smb
+block_stealth $wifi "{ tcp , udp }" "{ 137 , 138 , 139 }"
 
 #
 # VPN (general)

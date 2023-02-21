@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+# default maximum number of connections for a service
+DEFAULT_CON_MAX=100
+DEFAULT_RATE_MAX="15/30"
+
+# port assignments
 NTP=123
 
 #
@@ -71,9 +76,31 @@ pass in on $1 proto $2 from any to any port $3 keep state
 SERVER
 };
 
+#
+# open_server_throttle
+#
+
+# $1 = interface
+# $2 = proto
+# $3 = port
+# $4 = max connections
+# $5 = rate limit
+
 function open_server_throttle {
+  MAX=$4
+  if test -z "$MAX"
+  then
+    MAX=$DEFAULT_CON_MAX
+  fi
+
+  RATE=$5
+  if test -z "$RATE"
+  then
+    RATE=$DEFAULT_RATE_MAX
+  fi
+
   cat <<THROTTLE
-pass in on $1 proto $2 from any to any port $3 keep state (max-src-conn $4, max-src-conn-rate $5, overload <blacklist> flush global)
+pass in on $1 proto $2 from any to any port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
 THROTTLE
 };
 
@@ -91,6 +118,29 @@ pass out on $1 proto udp from any to any port { 67, 68 }
 pass in on $1 proto udp from any to any port { 67, 68 }
 DHCP
 };
+
+#
+# block_stealth - return unreachable
+#
+
+# $1 interface
+# $2 proto
+# $3 port
+# $4 rate | 10 packets / 30 seconds
+
+function block_stealth {
+  RATE=$4
+
+  if test -z "$RATE"
+  then
+    RATE=$DEFAULT_RATE_MAX
+  fi
+
+  cat <<STEALTH
+block return-icmp in on $1 proto $2 from any to any port $3 max-pkt-rate $RATE
+block drop in on $1 proto $2 from any to any port $3
+STEALTH
+}
 
 case $1 in
   "test")
