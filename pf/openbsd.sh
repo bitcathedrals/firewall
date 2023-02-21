@@ -12,6 +12,9 @@ function default_policy {
   cat <<DEFAULT_POLICY
 block drop all
 
+table <blacklist> persist
+block quick from <blacklist>
+
 pass on lo to 127.0.0.0/8
 pass from 127.0.0.0/8 to lo
 
@@ -63,9 +66,15 @@ CLIENT
 # $3 = port
 
 function open_server {
-    cat <<SERVER
+  cat <<SERVER
 pass in on $1 proto $2 from any to any port $3 keep state
 SERVER
+};
+
+function open_server_throttle {
+  cat <<THROTTLE
+pass in on $1 proto $2 from any to any port $3 keep state (max-src-conn $4, max-src-conn-rate $5, overload <blacklist> flush global)
+THROTTLE
 };
 
 #
