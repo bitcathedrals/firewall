@@ -125,7 +125,13 @@ case $1 in
   "stat")
     doas pfctl -P -N -s all
   ;;
-  "interfacce")
+  "blacklist")
+    doas pfctl -t blacklist -T show
+  ;;
+  "pardon")
+    doas pfctl -t blacklist -T flush
+  ;;
+  "interface")
     doas pfctl -P -N -i $1 -s all
   ;;
   "help")
@@ -145,6 +151,8 @@ enable    = enable the firewall
 
 rules     = show loaded rules
 stat      = show all rules and state
+blacklist = show blacklist table
+pardon    = flush the blacklist table
 interface = show all rules and state on INTERFACE
 HELP
   ;;
