@@ -50,16 +50,11 @@ open_out $wifi tcp "{ 194 , 6697 }"
 
 open_server_throttle $wifi tcp 6666 10 "5/10"
 
-# block ftp
-block_stealth $wifi tcp 21
-
-# block telnet
+# block ssh, telnet, ftp, rpc, smb
 block_stealth $wifi tcp 23
-
-# block rpc
+block_stealth $wifi tcp 21
+block_stealth $wifi tcp 23
 block_stealth $wifi "{ tcp , udp }" 111
-
-# block smb
 block_stealth $wifi "{ tcp , udp }" "{ 137 , 138 , 139 }"
 
 #
@@ -78,6 +73,7 @@ open_out $vpn udp $NTP
 # security
 
 open_out $vpn tcp ssh
+open_out $vpn tcp 6666
 
 # web and email and ftp
 
