@@ -30,7 +30,7 @@ open_dhcp $vpn
 open_out $wifi tcp "{ 80, 443 , 8080 }"
 open_out $wifi tcp "{ 25 , 2525 , 587 , 143 , 993 , 465 }"
 # irc
-open_out $wifi tcp 194
+open_out $wifi tcp "{ 194 , 6697 }"
 
 open_out $vpn udp domain
 open_out $vpn udp $NTP
@@ -41,7 +41,7 @@ open_out $vpn tcp "{ 80 , 443 , 8080 }"
 open_out $vpn tcp ftp
 open_out $vpn tcp "{ 25 , 2525 , 587 , 143 , 993 , 465 }"
 # irc
-open_out $vpn tcp 194
+open_out $vpn tcp "{ 194 , 6697 }"
 
 
 
