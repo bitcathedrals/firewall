@@ -21,7 +21,11 @@ open_out $wifi udp $NTP
 
 open_out $wifi tcp ssh
 
+open_out $wifi udp openvpn
+
 open_server $wifi tcp ssh
+
+open_out $wifi tcp "{ 80, 443 , 8080 }"
 
 open_dhcp $vpn
 
@@ -30,7 +34,7 @@ open_out $vpn udp $NTP
 
 open_out $vpn tcp ssh
 
-open_out $vpn tcp "{ http , https }"
+open_out $vpn tcp "{ 80 , 443 , 8080 }"
 open_out $vpn tcp ftp
 
 
