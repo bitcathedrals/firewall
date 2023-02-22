@@ -2,16 +2,15 @@
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
-FIREWALL="$HOME/code/firewall/pf"
-CONFIG="$FIREWALL/${HOST}.sh"
+CONFIG="/etc/firewall/${HOST}.sh"
 
-echo >/dev/stderr "firewall.sh: executing for host: $CONFIG"
+echo >/dev/stderr "FreeBSD.sh: executing for host: $CONFIG"
 
 if [[ -f $CONFIG ]]
 then
   source $CONFIG
 else
-  echo >/dev/stderr "firewall.sh: could not find $CONFIG, exiting 1"
+  echo >/dev/stderr "FreeBSD.sh: could not find $CONFIG, exiting 1"
   exit 1
 fi
 
