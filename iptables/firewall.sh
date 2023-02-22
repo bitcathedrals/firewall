@@ -32,7 +32,7 @@ function open_policy {
 function close_policy {
   rule -P INPUT DROP
   rule -P OUTPUT DROP
-  rule -P FORWARD DROP
+  rule -P FORWARD DROP;
 };
 
 function icmp_core {
@@ -315,13 +315,6 @@ case $1 in
     rule -X udp_srv_out
   ;;
   "flush")
-    rule -F INPUT
-    rule -Z INPUT
-    rule -F OUTPUT
-    rule -Z OUTPUT
-    rule -F FORWARD
-    rule -Z FORWARD
-
     rule -t nat -F POSTROUTING
     rule -t nat -Z POSTROUTING
     rule -t nat -F PREROUTING
