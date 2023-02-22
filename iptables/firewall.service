@@ -7,7 +7,7 @@ After=ulogd.service
 Type=oneshot
 RemainAfterExit=yes
 
-ExecStart=/etc/firewall/firewall.sh load
+ExecStart=/etc/firewall/firewall.sh start
 ExecReload=/etc/firewall/firewall.sh reload
 ExecStop=/etc/firewall/firewall.sh stop
 

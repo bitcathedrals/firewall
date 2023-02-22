@@ -5,7 +5,7 @@
 #
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
-CONFIG=/etc/firewall/$HOST.firewall.sh
+CONFIG=/etc/firewall/$HOST.sh
 
 echo "firewall.sh: executing for host: $HOST"
 
@@ -40,15 +40,15 @@ function icmp_core {
   # pass connection related
   #
 
-  rule  -A icmp_traffic_in  -p icmp -i $1 -m state --state RELATED  -j ACCEPT
-  rule  -A icmp_traffic_out -p icmp -i $1 -m state --state RELATED  -j ACCEPT;
+  rule -A icmp_traffic_in  -p icmp -i $1 -m state --state RELATED  -j ACCEPT
+  rule -A icmp_traffic_out -p icmp -i $1 -m state --state RELATED  -j ACCEPT;
 
   #
   # allow outbound ping
   #
 
-  rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-request -j ACCEPT
-  rule  -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-reply -j ACCEPT;
+  rule -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-request -j ACCEPT
+  rule -A icmp_traffic_out -p icmp -o $1 --icmp-type echo-reply -j ACCEPT;
 };
 
 
@@ -81,7 +81,7 @@ function icmp_block_strange {
   rule -A icmp_filter_out -p icmp -o $1 --icmp-type address-mask-reply -j DROP;
 };
 
-function ping_throttle {
+function icmp_ping_throttle {
   rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
   rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
 
@@ -89,11 +89,10 @@ function ping_throttle {
   rule -A icmp_traffic_in -p icmp -i $1 --icmp-type echo-request -j DROP;
 };
 
-function ping_block {
+function icmp_ping_block {
   rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-reply  -j DROP
   rule -A icmp_filter_in -p icmp -i $1 --icmp-type echo-request  -j DROP;
 };
-
 
 function tcp_core {
   #
@@ -119,7 +118,7 @@ function tcp_any_out {
   rule -A tcp_con_out -p tcp -o $1 -m state --state NEW -j ACCEPT;
 };
 
-function tcp_disable_broadcast {
+function tcp_drop_broadcast {
   #
   # disable tcp broadcast.
   #
@@ -128,19 +127,18 @@ function tcp_disable_broadcast {
   rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -j DROP;
 };
 
-
 function udp_core {
   rule -A udp_con_in -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
   rule -A udp_con_out -p udp -m state --state ESTABLISHED,RELATED -j ACCEPT
 };
 
-function udp_any_out {
-  rule -A udp_con_out -p udp -o $1 -m state --state NEW -j ACCEPT
-};
-
 function udp_drop_broadcast {
   rule -A udp_filter_in -p udp -i $1  -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP broadcast drop\""
   rule -A udp_filter_in -p udp -i $1 -m pkttype --pkt-type broadcast -j DROP;
+};
+
+function udp_any_out {
+  rule -A udp_con_out -p udp -o $1 -m state --state NEW -j ACCEPT
 };
 
 function open_dhcp {
@@ -155,7 +153,6 @@ function open_udp_out {
 function open_tcp_out {
   rule -A tcp_con_out -p tcp -o $1 --dport $2 -m state --state NEW -j ACCEPT;
 };
-
 
 function open_udp_server {
   rule -A udp_filter_in -p udp -i $1 --dport $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
@@ -179,11 +176,10 @@ function stealth_tcp_block {
   rule -I tcp_filter_in -p tcp -i $1 --dport $2 -j REJECT --reject-with icmp-host-unreachable;
 }
 
-
 function nat {
   sysctl net.ipv4.ip_forward="1"
 
-  rule  -t nat  -A POSTROUTING  -o $1  -j MASQUERADE
+  rule -t nat -A POSTROUTING  -o $1  -j MASQUERADE
 
   rule -A FORWARD -i $1 -j ACCEPT
   rule -A FORWARD -o $1 -j ACCEPT;
@@ -198,7 +194,7 @@ case $1 in
   ;;
   "init")
     #
-    # system configuratino
+    # system configuration
     #
 
     sysctl net.ipv4.tcp_ecn="1"
@@ -214,6 +210,13 @@ case $1 in
     sysctl net.ipv4.ip_default_ttl="97"
 
     #
+    # loopback
+    #
+
+    rule -A INPUT -i lo -j ACCEPT
+    rule -A OUTPUT -o lo -j ACCEPT
+
+    #
     # icmp protocol
     #
 
@@ -223,17 +226,17 @@ case $1 in
     rule -N icmp_traffic_in
     rule -N icmp_traffic_out
 
-    rule  -A INPUT  -p icmp -j icmp_filter_in
-    rule  -A OUTPUT -p icmp -j icmp_filter_out
+    rule -A INPUT  -p icmp -j icmp_filter_in
+    rule -A OUTPUT -p icmp -j icmp_filter_out
 
-    rule  -A INPUT  -p icmp -j icmp_traffic_in
-    rule  -A OUTPUT -p icmp -j icmp_traffic_out
+    rule -A INPUT  -p icmp -j icmp_traffic_in
+    rule -A OUTPUT -p icmp -j icmp_traffic_out
 
-    rule  -A INPUT -p icmp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: ICMP no matching rule\""
-    rule  -A INPUT -p icmp -j DROP
+    rule -A INPUT -p icmp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: ICMP no matching rule\""
+    rule -A INPUT -p icmp -j DROP
 
-    rule  -A OUTPUT -p icmp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: ICMP no matching rule\""
-    rule  -A OUTPUT -p icmp -j DROP
+    rule -A OUTPUT -p icmp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: ICMP no matching rule\""
+    rule -A OUTPUT -p icmp -j DROP
 
     #
     # tcp protocol
@@ -242,26 +245,26 @@ case $1 in
     rule -N tcp_filter_in
     rule -N tcp_filter_out
 
-    rule  -A INPUT   -p tcp -j tcp_filter_in
-    rule  -A OUTPUT  -p tcp -j tcp_filter_out
+    rule -A INPUT   -p tcp -j tcp_filter_in
+    rule -A OUTPUT  -p tcp -j tcp_filter_out
 
     rule -N tcp_con_in
     rule -N tcp_con_out
 
-    rule  -A INPUT   -p tcp -j tcp_con_in
-    rule  -A OUTPUT  -p tcp -j tcp_con_out
+    rule -A INPUT   -p tcp -j tcp_con_in
+    rule -A OUTPUT  -p tcp -j tcp_con_out
 
     rule -N tcp_srv_in
     rule -N tcp_srv_out
 
-    rule  -A INPUT   -p tcp -j tcp_srv_in
-    rule  -A OUTPUT  -p tcp -j tcp_srv_out
+    rule -A INPUT   -p tcp -j tcp_srv_in
+    rule -A OUTPUT  -p tcp -j tcp_srv_out
 
-    rule  -A INPUT -p tcp -i $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule  -A INPUT -p tcp -i $1 -j DROP
+    rule -A INPUT -p tcp -i $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
+    rule -A INPUT -p tcp -i $1 -j DROP
 
-    rule  -A OUTPUT -p tcp -o $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule  -A OUTPUT -p tcp -o $1 -j DROP
+    rule -A OUTPUT -p tcp -o $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
+    rule -A OUTPUT -p tcp -o $1 -j DROP
 
     #
     # udp protocol
@@ -270,26 +273,26 @@ case $1 in
     rule -N udp_filter_in
     rule -N udp_filter_out
 
-    rule  -A INPUT   -p udp -j udp_filter_in
-    rule  -A OUTPUT  -p udp -j udp_filter_out
+    rule -A INPUT   -p udp -j udp_filter_in
+    rule -A OUTPUT  -p udp -j udp_filter_out
 
     rule -N udp_con_in
     rule -N udp_con_out
 
-    rule  -A INPUT   -p udp -j udp_con_in
-    rule  -A OUTPUT  -p udp -j udp_con_out
+    rule -A INPUT   -p udp -j udp_con_in
+    rule -A OUTPUT  -p udp -j udp_con_out
 
     rule -N udp_srv_in
     rule -N udp_srv_out
 
-    rule  -A INPUT   -p udp -j udp_srv_in
-    rule  -A OUTPUT  -p udp -j udp_srv_out
+    rule -A INPUT   -p udp -j udp_srv_in
+    rule -A OUTPUT  -p udp -j udp_srv_out
 
-    rule  -A INPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
-    rule  -A INPUT -p udp -j DROP
+    rule -A INPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
+    rule -A INPUT -p udp -j DROP
 
-    rule  -A OUTPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
-    rule  -A OUTPUT -p udp -j DROP
+    rule -A OUTPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
+    rule -A OUTPUT -p udp -j DROP
   ;;
   "delete")
     rule -X icmp_filter_in
@@ -312,61 +315,54 @@ case $1 in
     rule -X udp_srv_out
   ;;
   "flush")
-    rule  -F INPUT
-    rule  -Z INPUT
-    rule  -F OUTPUT
-    rule  -Z OUTPUT
-    rule  -F FORWARD
-    rule  -Z FORWARD
-    rule  -t nat  -F POSTROUTING
-    rule  -t nat  -Z POSTROUTING
-    rule  -t nat  -F PREROUTING
-    rule  -t nat  -Z PREROUTING
-    rule  -F icmp_filter_in
-    rule  -Z icmp_filter_in
-    rule  -F icmp_filter_out
-    rule  -Z icmp_filter_out
-    rule  -F icmp_traffic_in
-    rule  -Z icmp_traffic_in
-    rule  -F icmp_traffic_out
-    rule  -Z icmp_traffic_out
-    rule  -F tcp_filter_in
-    rule  -Z tcp_filter_in
-    rule  -F tcp_filter_out
-    rule  -Z tcp_filter_out
-    rule  -F tcp_con_in
-    rule  -Z tcp_con_in
-    rule  -F tcp_con_out
-    rule  -Z tcp_con_out
-    rule  -F tcp_srv_in
-    rule  -Z tcp_srv_in
-    rule  -F tcp_srv_out
-    rule  -Z tcp_srv_out
-    rule  -F udp_filter_in
-    rule  -Z udp_filter_in
-    rule  -F udp_filter_out
-    rule  -Z udp_filter_out
-    rule  -F udp_con_in
-    rule  -Z udp_con_in
-    rule  -F udp_con_out
-    rule  -Z udp_con_out
-    rule  -F udp_srv_in
-    rule  -Z udp_srv_in
-    rule  -F udp_srv_out
-    rule  -Z udp_srv_out
+    rule -F INPUT
+    rule -Z INPUT
+    rule -F OUTPUT
+    rule -Z OUTPUT
+    rule -F FORWARD
+    rule -Z FORWARD
+
+    rule -t nat -F POSTROUTING
+    rule -t nat -Z POSTROUTING
+    rule -t nat -F PREROUTING
+    rule -t nat -Z PREROUTING
+
+    rule -F icmp_filter_in
+    rule -Z icmp_filter_in
+    rule -F icmp_filter_out
+    rule -Z icmp_filter_out
+    rule -F icmp_traffic_in
+    rule -Z icmp_traffic_in
+    rule -F icmp_traffic_out
+    rule -Z icmp_traffic_out
+
+    rule -F tcp_filter_in
+    rule -Z tcp_filter_in
+    rule -F tcp_filter_out
+    rule -Z tcp_filter_out
+    rule -F tcp_con_in
+    rule -Z tcp_con_in
+    rule -F tcp_con_out
+    rule -Z tcp_con_out
+    rule -F tcp_srv_in
+    rule -Z tcp_srv_in
+    rule -F tcp_srv_out
+    rule -Z tcp_srv_out
+
+    rule -F udp_filter_in
+    rule -Z udp_filter_in
+    rule -F udp_filter_out
+    rule -Z udp_filter_out
+    rule -F udp_con_in
+    rule -Z udp_con_in
+    rule -F udp_con_out
+    rule -Z udp_con_out
+    rule -F udp_srv_in
+    rule -Z udp_srv_in
+    rule -F udp_srv_out
+    rule -Z udp_srv_out
   ;;
   "load")
-
-    #
-    # loopback
-    #
-
-    rule  -A INPUT -i lo -j ACCEPT
-    rule  -A OUTPUT -o lo -j ACCEPT
-
-    rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $LOOPBACK_NETMASK  -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: spoof attempt\""
-    rule  -A INPUT  -i $EXTERNAL_INTERFACE  -s $LOOPBACK_NETMASK  -j DROP
-
     #
     # load the config
     #
@@ -379,28 +375,35 @@ case $1 in
   ;;
   "reload")
     $0 flush
-    $0 delete
     $0 load
   ;;
-  "delete")
+  "start")
+    $0 init
+    $0 load
+    $0 close
+  ;;
+  "stop")
     $0 flush
     $0 delete
     $0 open
   ;;
+  "list")
+    iptables -v --list
+  ;;
   "help"|*)
     cat <<HELP
 firewall.sh
-open     = default ACCEPT policy
-close    = default DROP policy
+open   = default ACCEPT policy
+close  = default DROP policy
 
-init     = initialize the kernel and chains
-flush    = flush chains
-delete   =  delete chains
+init   = initialize the kernel and chains
 
-load     = load the firewall rules
-reload   = re-initialize the firewall
+flush  = flush chains
+load   = load the firewall rules
+reload = re-initialize the firewall
 
-delete   = flush, delete chains and set open policy
+start  = init, load, and set close policy
+stop   = flush, delete, and set open policy
 HELP
   ;;
 esac
