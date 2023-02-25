@@ -29,6 +29,10 @@ open_dhcp $wifi
 open_out $wifi udp domain
 open_out $wifi udp $NTP
 
+# needed for updates and packages
+
+open_out $wifi tcp "{ 80, 443 , 8080 }"
+
 # security
 
 open_out $wifi tcp ssh
