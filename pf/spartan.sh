@@ -5,6 +5,8 @@ pf_firewall=$HOME/code/firewall/pf/openbsd.sh
 wifi="iwx0"
 vpn="tun0"
 
+NTP=123
+
 source $pf_firewall
 
 #
