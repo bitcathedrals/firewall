@@ -45,4 +45,4 @@ open_out $wifi tcp $SSH
 open_server_throttle $wifi tcp $SSH 10 "5/10"
 open_server_throttle $wifi tcp $IRC 10 "5/10"
 
-open_server_from $wifi tcp "{ 192.168.10.141 , 192.168.10.127 }" $RSYNC 10 "5/10"
+open_server_from $wifi tcp $RSYNC "{ 192.168.10.141 , 192.168.10.127 }" 10 "5/10"
