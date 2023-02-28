@@ -105,6 +105,35 @@ THROTTLE
 };
 
 #
+# open_server_from
+#
+
+# $1 interface
+# $2 proto
+# $3 port
+# $4 from network range
+# $5 max connections
+# $6 rate limit
+
+function open_server_from {
+  MAX=$4
+  if test -z "$MAX"
+  then
+    MAX=$DEFAULT_CON_MAX
+  fi
+
+  RATE=$5
+  if test -z "$RATE"
+  then
+    RATE=$DEFAULT_RATE_MAX
+  fi
+
+  cat <<THROTTLE
+pass in on $1 proto $2 from $4 to any port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
+THROTTLE
+};
+
+#
 # open_dhcp
 #
 

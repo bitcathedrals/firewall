@@ -1,13 +1,15 @@
 #! /usr/bin/env bash
 
-pf_firewall=$HOME/code/firewall/pf/openbsd.sh
+pf_openbsd=$HOME/code/firewall/pf/openbsd.sh
 
 wifi="iwx0"
 
+SSH=6666
 NTP=123
-IRCD=6667
+IRC=6667
+RSYNC=873
 
-source $pf_firewall
+source $pf_openbsd
 
 #
 # basics policy
@@ -36,10 +38,11 @@ open_out $wifi tcp "{ 80, 443 , 8080 }"
 # security
 
 open_out $wifi tcp ssh
-open_out $wifi tcp 6666
+open_out $wifi tcp $SSH
 
 # ssh server
 
-open_server_throttle $wifi tcp 6666 10 "5/10"
-open_server_throttle $wifi tcp $IRCD 10 "5/10"
+open_server_throttle $wifi tcp $SSH 10 "5/10"
+open_server_throttle $wifi tcp $IRC 10 "5/10"
 
+open_server_from $wifi tcp "{ 192.168.10.141 , 192.168.10.127 }" $RSYNC 10 "5/10"
