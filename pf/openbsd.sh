@@ -116,13 +116,13 @@ THROTTLE
 # $6 rate limit
 
 function open_server_from {
-  MAX=$4
+  MAX=$5
   if test -z "$MAX"
   then
     MAX=$DEFAULT_CON_MAX
   fi
 
-  RATE=$5
+  RATE=$6
   if test -z "$RATE"
   then
     RATE=$DEFAULT_RATE_MAX
