@@ -195,7 +195,7 @@ case $1 in
   "enable")
     doas pfctl -e
   ;;
-  "enable")
+  "disable")
     doas pfctl -d
   ;;
   "rules")
