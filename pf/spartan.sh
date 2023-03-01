@@ -6,6 +6,7 @@ wifi="iwx0"
 vpn="tun0"
 
 NTP=123
+IRC=6667
 
 source $pf_firewall
 
@@ -46,7 +47,7 @@ open_out $wifi tcp "{ 25 , 2525 , 587 , 143 , 993 , 465 }"
 
 # irc
 
-open_out $wifi tcp "{ 194 , 6697 }"
+open_out $wifi tcp "{ 194 , $IRC }"
 
 # ssh server
 
