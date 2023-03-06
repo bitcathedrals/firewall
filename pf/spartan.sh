@@ -7,6 +7,8 @@ vpn="tun0"
 
 NTP=123
 IRC=6667
+RSYNC=873
+MY_SSH=6666
 
 source $pf_firewall
 
@@ -31,10 +33,11 @@ open_dhcp $wifi
 open_out $wifi udp domain
 open_out $wifi udp $NTP
 
-# security
+# security and backup
 
 open_out $wifi tcp ssh
-open_out $wifi tcp 6666
+open_out $wifi tcp $MY_SSH
+open_out $wifi tcp $RSYNC
 
 # VPN
 
@@ -51,7 +54,7 @@ open_out $wifi tcp "{ 194 , $IRC }"
 
 # ssh server
 
-open_server_throttle $wifi tcp 6666 10 "5/10"
+open_server_throttle $wifi tcp $MY_SSH 10 "5/10"
 
 # block ssh, telnet, ftp, rpc, smb
 block_stealth $wifi tcp 23
@@ -76,7 +79,7 @@ open_out $vpn udp $NTP
 # security
 
 open_out $vpn tcp ssh
-open_out $vpn tcp 6666
+open_out $vpn tcp $MY_SSH
 
 # web and email and ftp
 
