@@ -20,8 +20,8 @@ block drop all
 table <blacklist> persist
 block quick from <blacklist>
 
-pass on lo to 127.0.0.0/8
-pass from 127.0.0.0/8 to lo
+pass out on lo
+pass in on lo
 
 antispoof for lo
 
