@@ -7,6 +7,8 @@ DEFAULT_RATE_MAX="15/30"
 # port assignments
 NTP=123
 
+LO=`ifconfig | grep lo | head -n 1 | cut -d ':' -f 1`
+
 #
 # default_policy
 #
@@ -20,10 +22,10 @@ block drop all
 table <blacklist> persist
 block quick from <blacklist>
 
-pass out on lo
-pass in on lo
+pass in on $LO
+pass out on $LO
 
-antispoof for lo
+antispoof for $LO
 
 pass out proto icmp to any keep state
 DEFAULT_POLICY
