@@ -6,6 +6,7 @@ DEFAULT_RATE_MAX="15/30"
 
 # port assignments
 NTP=123
+DOMAIN=53
 
 LO=`ifconfig | grep lo | head -n 1 | cut -d ':' -f 1`
 
@@ -31,6 +32,29 @@ pass out proto icmp to any keep state
 DEFAULT_POLICY
 };
 
+
+#
+# rpc ports
+#
+
+# $1 = host
+# $2 = service
+# $3 = protocol
+function rpc_port {
+  rpcinfo -p $1 | grep $2 | grep $3 | head -n 1 | tr -s ' ' | cut -d ' ' -f 5;
+}
+
+function rpc_print {
+  cat >/dev/stderr <<PORTLIST
+rpc ports:
+
+portmap udp = $PORTMAP_UDP tcp = $PORTMAP_TCP
+status udp = $STATUS_UDP tcp = $STATUS_TCP
+lock udp = $LOCK_UDP tcp = $LOCK_TCP
+mount udp = $MOUNT_UDP tcp = $MOUNT_TCP
+NFS udp = $NFS_UDP tcp = $NFS_TCP
+PORTLIST
+}
 
 #
 # open_icmp
@@ -177,9 +201,9 @@ case $1 in
   "test")
     hostname=`hostname | cut -d . -f 1`
     echo "testing firewall for: $hostname"
-    ./${hostname}.sh >${hostname}-test.pf
+    ./${hostname}.sh >${hostname}.pf
 
-    pfctl -n -f ${hostname}-test.pf
+    pfctl -n -f ${hostname}.pf
   ;;
   "update")
     hostname=`hostname | cut -d . -f 1`
