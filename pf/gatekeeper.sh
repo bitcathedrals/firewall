@@ -22,6 +22,8 @@ MOUNT_TCP=866
 
 MOUNT_NFS=2049
 
+DOMAIN=53
+
 source $pf_openbsd
 
 #
@@ -41,7 +43,7 @@ open_dhcp $wifi
 
 # basic services
 
-open_out $wifi udp domain
+open_out $wifi udp $DOMAIN
 open_out $wifi udp $NTP
 
 # needed for updates and packages
@@ -57,6 +59,8 @@ open_out $wifi tcp $SSH
 
 open_server_throttle $wifi tcp $SSH 10 "5/10"
 open_server_throttle $wifi tcp $IRC 10 "5/10"
+
+open_server_from $wifi udp $DOMAIN "192.168.10.0/24" "25" "25/1"
 
 open_server_from $wifi tcp $RSYNC "{192.168.10.141,192.168.10.127,192.168.10.169, 192.168.10.138}" 10 "5/10"
 
