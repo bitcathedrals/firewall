@@ -14,6 +14,9 @@ PORTMAP=111
 STATUS_UDP=736
 STATUS_TCP=905
 
+LOCK_UDP=626
+LOCK_TCP=849
+
 MOUNT_UDP=793
 MOUNT_TCP=866
 
@@ -61,6 +64,9 @@ open_server_from $wifi "{tcp,udp}" $PORTMAP "192.168.10.0/24" 20 "5/10"
 
 open_server_from $wifi udp $STATUS_UDP "192.168.10.0/24" 20 "5/10"
 open_server_from $wifi tcp $STATUS_TCP "192.168.10.0/24" 20 "5/10"
+
+open_server_from $wifi udp $LOCK_UDP "192.168.10.0/24" 20 "5/10"
+open_server_from $wifi tcp $LOCK_TCP "192.168.10.0/24" 20 "5/10"
 
 open_server_from $wifi udp $MOUNT_UDP "192.168.10.0/24" 20 "5/10"
 open_server_from $wifi tcp $MOUNT_TCP "192.168.10.0/24" 20 "5/10"
