@@ -5,29 +5,26 @@ pf_firewall=$HOME/code/firewall/pf/openbsd.sh
 wifi="iwx0"
 vpn="tun0"
 
-NTP=123
-
-IRC=6667
-
-RSYNC=873
+IRC=6697
 
 MY_SSH=6666
 
-PORTMAP=111
-
-STATUS_UDP=736
-STATUS_TCP=905
-
-LOCK_UDP=626
-LOCK_TCP=849
-
-MOUNT_UDP=793
-MOUNT_TCP=866
-
-MOUNT_NFS=2049
-
-
 source $pf_firewall
+
+PORTMAP_UDP=`rpc_port gatekeeper.local portmapper udp`
+PORTMAP_TCP=`rpc_port gatekeeper.local portmapper tcp`
+
+STATUS_UDP=`rpc_port gatekeeper.local status udp`
+STATUS_TCP=`rpc_port gatekeeper.local status tcp`
+
+LOCK_UDP=`rpc_port gatekeeper.local nlockmgr udp`
+LOCK_TCP=`rpc_port gatekeeper.local nlockmgr tcp`
+
+MOUNT_UDP=`rpc_port gatekeeper.local mountd udp`
+MOUNT_TCP=`rpc_port gatekeeper.local mountd tcp`
+
+NFS_UDP=`rpc_port gatekeeper.local nfs udp`
+NFS_TCP=`rpc_port gatekeeper.local nfs tcp`
 
 #
 # basics policy
@@ -72,7 +69,8 @@ open_out $wifi tcp "{ 194 , $IRC }"
 
 # nfs
 
-open_out $wifi "{tcp,udp}" $PORTMAP
+open_out $wifi udp $PORTMAP_UDP
+open_out $wifi tcp $PORTMAP_TCP
 
 open_out $wifi udp $STATUS_UDP
 open_out $wifi tcp $STATUS_TCP
@@ -83,7 +81,8 @@ open_out $wifi tcp $LOCK_TCP
 open_out $wifi udp $MOUNT_UDP
 open_out $wifi tcp $MOUNT_TCP
 
-open_server_from $wifi "{tcp,udp}" $MOUNT_NFS "192.168.10.0/24" 20 "5/10"
+open_out $wifi udp $NFS_UDP
+open_out $wifi tcp $NFS_TCP
 
 # ssh server
 
@@ -122,7 +121,7 @@ open_out $vpn tcp ftp
 
 # irc
 
-open_out $vpn tcp "{ 194 , 6697 }"
+open_out $vpn tcp "{ 194 , $IRC }"
 
 
 

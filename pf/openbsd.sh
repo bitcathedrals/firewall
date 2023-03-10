@@ -8,6 +8,8 @@ DEFAULT_RATE_MAX="15/30"
 NTP=123
 DOMAIN=53
 
+RSYNC=873
+
 LO=`ifconfig | grep lo | head -n 1 | cut -d ':' -f 1`
 
 #
