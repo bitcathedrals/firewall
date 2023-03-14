@@ -194,8 +194,9 @@ function block_stealth {
   fi
 
   cat <<STEALTH
-block return-icmp in log on $1 proto $2 from any to any port $3 max-pkt-rate $RATE
-block drop in log on $1 proto $2 from any to any port $3
+
+block return-icmp in log (all, to pflog0) on $1 proto $2 from any to any port $3 max-pkt-rate $RATE
+block drop in on $1 proto $2 from any to any port $3
 STEALTH
 }
 

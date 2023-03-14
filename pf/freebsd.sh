@@ -2,181 +2,196 @@
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
-CONFIG="/etc/firewall/${HOST}.sh"
+REPO=$HOME/coding/firewall/pf
+CONFIG=$REPO/${HOST}.sh
 
-echo >/dev/stderr "FreeBSD.sh: executing for host: $CONFIG"
+FIREWALL="$REPO/firewall.sh"
+
+STABLE=/etc/pf.conf
+DEV=$REPO/pf.conf
+
+BLACKLIST=/etc/blacklistd.conf
+RC=/etc/rc.conf
+SYSCTL=/etc/sysctl.conf
 
 if [[ -f $CONFIG ]]
 then
+  echo >/dev/stderr "bsd.sh: loading firewall config: $CONFIG"
   source $CONFIG
 else
-  echo >/dev/stderr "FreeBSD.sh: could not find $CONFIG, exiting 1"
-  exit 1
-fi
-
-#
-# open_client
-#
-# 1 = enable/disable
-# 2 = name
-# 3 = origin network
-# 4 = proto
-# 5 = port
-
-function open_client {
-  if [[ $1 == "yes" ]]
+  if [[ $1 == "pf" ]] || [[ $1 == "blacklist" ]] || [[ $1 == "blackhole" ]]
   then
-    # get the ip from the network portion
-    ip=`ifconfig | grep $3 | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 3`
-
-    cat <<CLIENT
-pass out proto $4 from $ip to any port $5
-pass in proto $4 from any port $ip to $ip
-CLIENT
+    echo >/dev/stderr "bsd.sh skipping config load for root command $1"
+  else
+    echo >/dev/stderr "bsd.sh: could not locate host config $CONFIG, aborting!"
+    exit 1
+  fi
 fi
-}
 
-#
-# open_server
-#
-# 1 = enable/disable
-# 2 = name
-# 3 = origin network
-# 4 = proto
-# 5 = port
-
-
-function open_server {
-  if [[ $1 == "yes" ]]
-  then
-    # get the ip from the network portion
-    ip=`ifconfig | grep $3 | tr '\t' ' ' | tr -s ' ' | cut -d ' ' -f 3`
-
-    cat <<SERVER
-pass out proto $4 from $ip port $5 to any
-pass in proto $4 from any to $ip port $5
-SERVER
-fi
-}
-
-cat <<DEFAULT_POLICY
-scrub in all
-block in all
-DEFAULT_POLICY
-
-cat <<LOOPBACK
-pass on lo to 127.0.0.0/8
-pass from 127.0.0.0/8 to lo
-
-antispoof for lo
-LOOPBACK
-
-cat <<ICMP
-pass out proto icmp to any keep state
-pass in proto icmp from any
-ICMP
-
-if [[ $FIREWALL_BLACKLIST == "yes" ]]
+if [[ -f $FIREWALL ]]
 then
-  interface=`ifconfig | grep -B3 $BLACKLIST_NETWORK | head -n 1 | cut -d ':' -f 1`
-
-  cat <<BLACKLIST
-anchor "blacklistd/*" in on $interface
-BLACKLIST
-fi
-
-if [[ $FIREWALL_OUTBOUND_ALL == "yes" ]]
-then
-  cat <<OUTBOUND
-pass out proto { tcp, udp } keep state
-OUTBOUND
+  echo >/dev/stderr "bsd.sh: loading firewall: $FIREWALL"
 else
-  cat <<OUTBOUND
-block out all proto { tcp, udp }
-OUTBOUND
+  if [[ $1 == "pf" ]] || [[ $1 == "blacklist" ]] || [[ $1 == "blackhole" ]]
+  then
+    echo >/dev/stderr "bsd.sh skipping config load for root command $1"
+  else
+    echo >/dev/stderr "bsd.sh: could not locate firewall -> $FIREWALL, aborting!"
+    exit 1
+  fi
 fi
 
-#
-# DHCP
-#
+case $1 in
+  "permissions")
+    echo >/dev/stderr "bsd.sh: unlocking system file permissions."
 
-if [[ $FIREWALL_CLIENT_DHCP ==  "yes" ]]
-then
-  cat <<DHCP
-pass out proto udp to any port { 67, 68 }
-pass in proto udp from any port { 67, 68 }
-DHCP
-fi
+    su root chflags nouarch $BLACKLIST $RC $SYSCTL
+    su root chgrp wheel $BLACKLIST $RC $SYSCTL
+    su root chmod g+rw $BLACKLIST $RC $SYSCTL
+  ;;
+  "onestart")
+    echo >/dev/stderr "bsd.sh: onestart loading kernel modules and launching system daemons."
 
-#
-# clients
-#
+    sudo kldload pf
+    sudo service pflog onestart
+    sudo service pf onestart
+    sudo service blacklistd onestart
+  ;;
+  "flush")
+    echo >/dev/stderr "bsd.sh: flushing firewall."
 
-open_client $FIREWALL_OUTBOUND_DOMAIN \
-            DNS \
-            $EXTERNAL_NETWORK \
-            udp \
-            domain
+    sudo pfctl -F all
+  ;;
+  "list")
+    echo /dev/stderr "bsd.sh listing firewall rules."
 
-open_client $FIREWALL_OUTBOUND_ZONE \
-            domain \
-            $EXTERNAL_NETWORK \
-            tcp \
-            domain
+    sudo pfctl -sr
+  ;;
+  "disable")
+    echo /dev/stderr "bsd.sh: disabling firewall."
 
-open_client $FIREWALL_OUTBOUND_NTP \
-            ntp \
-            $EXTERNAL_NETWORK \
-            udp \
-            ntp
-#
-# servers
-#
+    sudo pfctl -d
+  ;;
+  "enable")
+    echo /dev/stderr "bsd.sh enabling firewall."
 
-open_server $FIREWALL_EXTERNAL_SSH \
-            SSH \
-            $EXTERNAL_NETWORK \
-            tcp \
-            $FIREWALL_SSH_PORT
+    sudo pfctl -ef $STABLE
+  ;;
+  "stable")
+    echo /dev/stderr "bsd.sh installing dev firewall into system stable."
 
-open_server $FIREWALL_INTERNAL_SSH \
-            SSH \
-            $INTERNAL_NETWORK \
-            tcp \
-            $FIREWALL_SSH_PORT
+    sudo cp $DEV $STABLE
+  ;;
+  "dev")
+    echo /dev/stderr "bsd,sh: generating and loading dev firewall."
+    $FIREWALL >$DEV
+  ;;
+  "load")
+    echo /dev/stderr "bsd.sh: loading dev firewall."
 
-open_server $FIREWALL_EXTERNAL_HTTP \
-            HTTP:80 \
-            $EXTERNAL_NETWORK \
-            tcp \
-            http
+    sudo pfctl -ef $DEV
+  ;;
+  "check")
+    echo /dev/stderr "bsd.sh: firewall dry run."
 
-open_server $FIREWALL_INTERNAL_HTTP \
-            HTTP:80 \
-            $INTERNAL_NETWORK \
-            tcp \
-            http
+    $FIREWALL >$DEV
+    pfctl -vnf $DEV
+  ;;
+  "install")
+    echo /dev/stderr "bsd.sh install the firewall into the system."
 
-open_server $FIREWALL_EXTERNAL_HTTPS \
-            HTTPS:443 \
-            $EXTERNAL_NETWORK \
-            tcp \
-            https
+    $0 dev
+    $0 stable
 
-open_server $FIREWALL_INTERNAL_HTTPS \
-            HTTPS:443 \
-            $INTERNAL_NETWORK \
-            tcp \
-            https
+    $0 blackhole
+    $0 blacklist
 
-open_server $FIREWALL_EXTERNAL_HTTP_PROXY \
-            HTTP:8080 \
-            $EXTERNAL_NETWORK \
-            tcp \
-            8080
+    $0 pf
+  ;;
+  "info")
+    echo /dev/stderr "bsd.sh: list information on sockets and firewall rules."
 
-open_server $FIREWALL_INTERNAL_HTTP_PROXY \
-            HTTP:8080 \
-            $INTERNAL_NETWORK \
-            tcp \
-            8080
+    sudo sockstat -4
+    sudo pfctl -sr
+  ;;
+  "restart")
+    echo /dev/stderr "bsd.sh: restarting all firewall services,"
+
+    if [[ $FIREWALL_BLACKLIST == "yes" ]]
+    then
+      sudo service blacklistd restart
+    fi
+
+    sudo service sshd restart
+
+    if [[ $2 == "dev" ]]
+    then
+      sudo pf -ef $DEV
+    else
+      sudo pf -ef $STABLE
+    fi
+
+    sudo service pflog restart
+    sudo service pf restart
+  ;;
+  "dev")
+    echo /dev/stderr "bsd.sh: restarting dev firewall."
+
+    $0 restart dev
+  ;;
+  "stable")
+    echo /dev/stderr "bsd.sh: restarting stable firewall."
+
+    $0 restart stable
+  ;;
+  "blacklist")
+    if grep -v blacklistd_enable $RC
+    then
+      cat >>$RC <<CONF
+blacklistd_enable="YES"
+CONF
+    fi
+  ;;
+  "blackhole")
+    echo /dev/stderr "bsd.sh: installing blackhole firewall configuration."
+
+    if grep -v net.inet.tcp.blackhole $SYSCTL && grep -v net.inet.tcp.blackhole $SYSCTL
+    then
+      cat >>$SYSCTL <<CONF
+net.inet.tcp.blackhole=2
+net.inet.udp.blackhole=1
+CONF
+    fi
+  ;;
+  "pf")
+    echo /dev/stderr "bsd.sh: installing pf configuration."
+
+    if grep -v pf_enable $RC && grep -v pflog_enable $RC
+    then
+      cat >>$RC <<CONF
+pf_enable="YES"
+pflog_enable="YES"
+CONF
+    fi
+  ;;
+  "help"|*)
+    cat >/dev/stderr <<HELP
+bsd.sh
+
+onestart              = start pf services without global configuration
+flush                 = flush all firewall rules
+disable               = disable packet filter
+list                  = show rules
+enable                = enable the packet filter
+stable                = load stable version of packet filter
+dev                   = load development version of packet filter
+check                 = check syntax of the packet filter
+blackhole             = install blackhole configuration
+blacklist             = update the blacklist.conf file
+pf                    = update rc.conf to load firewall
+restart <dev|stable>  = restart stable firewall and related services
+install               = install the development firewall into /etc/
+info                  = show pf info
+HELP
+  ;;
+esac
