@@ -80,7 +80,7 @@ open_from tcp $SSH $wired_myip $wired "5/1" 10
 # DNS server
 
 open_from udp $DOMAIN $wireless_myip $wireless "50/1" 150
-open_from udp $DOMAIN $wired_myip "50/1" 150
+open_from udp $DOMAIN $wired_myip $wired "50/1" 150
 
 # IRC server
 
