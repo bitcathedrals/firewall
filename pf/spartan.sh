@@ -7,7 +7,10 @@ ethernet="ure0"
 vpn="tun0"
 
 wireless="192.168.10.0/24"
+wireless_myip="192.168.10.138"
+
 wired="192.168.24.0/24"
+wired_myip="192.168.24.5"
 
 IRC=6697
 
@@ -53,7 +56,6 @@ MOUNT_TCP=`rpc_port gatekeeper.wired mountd tcp`
 
 NFS_UDP=`rpc_port gatekeeper.wired nfs udp`
 NFS_TCP=`rpc_port gatekeeper.wired nfs tcp`
-
 
 # SSH
 
@@ -105,8 +107,8 @@ open_out $ethernet tcp $RDP
 
 # ssh server
 
-open_from tcp $wireless $MY_SSH "5/10" 10
-open_from tcp $wired $MY_SSH "5/10" 10
+open_from tcp $MY_SSH $wireless_myip $wireless "5/10" 10
+open_from tcp $MY_SSH $wired_myip $wired "5/10" 10
 
 # block ssh, telnet, ftp, rpc, smb
 block_stealth $wifi tcp 23
