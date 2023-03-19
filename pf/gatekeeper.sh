@@ -71,34 +71,37 @@ open_out $ethernet tcp $SSH
 
 # ssh server
 
-open_server_throttle $wifi tcp $SSH 10 "5/10"
-open_server_throttle $ethernet tcp $SSH 10 "5/10"
+open_from tcp $SSH $wireless "5/10" 10
+open_from tcp $SSH $wired "5/10" 10
 
 # DNS server
 
-open_server_from $wifi udp $DOMAIN $wireless "25" "25/1"
-open_server_from $ethernet udp $DOMAIN $wired "25" "25/1"
+open_from udp $DOMAIN $wireless "25/1" 50
+open_from udp $DOMAIN $wired "25/1" 50
 
 # IRC server
 
-open_server_throttle $wifi tcp $IRC 10 "5/10"
-open_server_throttle $ethernet tcp $IRC 10 "5/10"
+# open_on $wifi tcp $IRC 10 "5/10"
+# open_on $ethernet tcp $IRC 10 "5/10"
 
+# rsync
 
-open_server_from $ethernet tcp $RSYNC "{ $cracker , $hades , $redbox , $spartan }" 10 "5/10"
+open_from tcp $RSYNC "{ $cracker , $hades , $redbox , $spartan }" "5/10" 10
 
-open_server_from $ethernet udp $PORTMAP_UDP $wired "25" "30/10"
-open_server_from $ethernet tcp $PORTMAP_TCP $wired "25" "30/10"
+# NFS
 
-open_server_from $ethernet udp $STATUS_UDP $wired "25" "30/10"
-open_server_from $ethernet tcp $STATUS_TCP $wired "25" "30/10"
+open_from udp $PORTMAP_UDP $wired "30/10" "25"
+open_from tcp $PORTMAP_TCP $wired "30/10" "25"
 
-open_server_from $ethernet udp $LOCK_UDP $wired "25" "30/10"
-open_server_from $ethernet tcp $LOCK_TCP $wired "25" "30/10"
+open_from udp $STATUS_UDP $wired "30/10" "25"
+open_from tcp $STATUS_TCP $wired "30/10" "25"
 
-open_server_from $ethernet udp $MOUNT_UDP $wired "25" "30/10"
-open_server_from $ethernet tcp $MOUNT_TCP $wired "25" "30/10"
+open_from udp $LOCK_UDP $wired "30/10" "25"
+open_from tcp $LOCK_TCP $wired "30/10" "25"
 
-open_server_from $ethernet udp $NFS_UDP $wired "25" "30/10"
-open_server_from $ethernet tcp $NFS_TCP $wired "25" "30/10"
+open_from udp $MOUNT_UDP $wired "25" "30/10"
+open_from tcp $MOUNT_TCP $wired "25" "30/10"
+
+open_from udp $NFS_UDP $wired "30/10" "25"
+open_from tcp $NFS_TCP $wired "30/10" "25"
 

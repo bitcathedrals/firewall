@@ -42,6 +42,7 @@ DEFAULT_POLICY
 # $1 = host
 # $2 = service
 # $3 = protocol
+
 function rpc_port {
   rpcinfo -p $1 | grep $2 | grep $3 | head -n 1 | tr -s ' ' | cut -d ' ' -f 5;
 }
@@ -72,6 +73,23 @@ pass in on $1 proto icmp
 ICMP
 };
 
+
+#
+# open_dhcp
+#
+
+# open dhcp for interface
+
+# $1 = interface
+
+function open_dhcp {
+  cat <<DHCP
+pass out on $1 proto udp from any to any port { 67, 68 }
+pass in on $1 proto udp from any to any port { 67, 68 }
+DHCP
+};
+
+
 #
 # open_out
 #
@@ -89,7 +107,7 @@ CLIENT
 };
 
 #
-# open_server
+# open_on
 #
 
 # open server access from outside
@@ -98,82 +116,38 @@ CLIENT
 # $2 = proto
 # $3 = port
 
-function open_server {
+function open_on {
   cat <<SERVER
 pass in on $1 proto $2 from any to any port $3 keep state
 SERVER
 };
 
 #
-# open_server_throttle
+# open_from
 #
 
-# $1 = interface
-# $2 = proto
-# $3 = port
-# $4 = max connections
-# $5 = rate limit
+# $1 = proto
+# $2 = port
+# $3 = network
+# $4 = rate limit
+# $5 = max connections
 
-function open_server_throttle {
-  MAX=$4
-  if test -z "$MAX"
-  then
-    MAX=$DEFAULT_CON_MAX
-  fi
-
-  RATE=$5
-  if test -z "$RATE"
-  then
-    RATE=$DEFAULT_RATE_MAX
-  fi
-
-  cat <<THROTTLE
-pass in on $1 proto $2 from any to any port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
-THROTTLE
-};
-
-#
-# open_server_from
-#
-
-# $1 interface
-# $2 proto
-# $3 port
-# $4 from network range
-# $5 max connections
-# $6 rate limit
-
-function open_server_from {
+function open_from {
   MAX=$5
   if test -z "$MAX"
   then
     MAX=$DEFAULT_CON_MAX
   fi
 
-  RATE=$6
+  RATE=$4
   if test -z "$RATE"
   then
     RATE=$DEFAULT_RATE_MAX
   fi
 
   cat <<THROTTLE
-pass in on $1 proto $2 from $4 to any port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
+pass in proto $1 from $3 to any port $2 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
 THROTTLE
-};
-
-#
-# open_dhcp
-#
-
-# open dhcp for interface
-
-# $1 = interface
-
-function open_dhcp {
-  cat <<DHCP
-pass out on $1 proto udp from any to any port { 67, 68 }
-pass in on $1 proto udp from any to any port { 67, 68 }
-DHCP
 };
 
 #
