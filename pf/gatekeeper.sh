@@ -99,8 +99,8 @@ open_from tcp $STATUS_TCP $wired "30/10" "25"
 open_from udp $LOCK_UDP $wired "30/10" "25"
 open_from tcp $LOCK_TCP $wired "30/10" "25"
 
-open_from udp $MOUNT_UDP $wired "25" "30/10"
-open_from tcp $MOUNT_TCP $wired "25" "30/10"
+open_from udp $MOUNT_UDP $wired "30/10" "25"
+open_from tcp $MOUNT_TCP $wired "30/10" "25"
 
 open_from udp $NFS_UDP $wired "30/10" "25"
 open_from tcp $NFS_TCP $wired "30/10" "25"
