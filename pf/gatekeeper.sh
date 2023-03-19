@@ -14,7 +14,6 @@ spartan=192.168.24.5
 redbox=192.168.24.6
 hades=192.168.24.7
 
-unix="\"{ $cracker , $hades , $redbox , $spartan }\""
 
 SSH=6666
 IRC=6667
@@ -86,7 +85,7 @@ open_server_throttle $wifi tcp $IRC 10 "5/10"
 open_server_throttle $ethernet tcp $IRC 10 "5/10"
 
 
-open_server_from $ethernet tcp $RSYNC $unix 10 "5/10"
+open_server_from $ethernet tcp $RSYNC "{ $cracker , $hades , $redbox , $spartan }" 10 "5/10"
 
 open_server_from $ethernet udp $PORTMAP_UDP $wired "25" "30/10"
 open_server_from $ethernet tcp $PORTMAP_TCP $wired "25" "30/10"
