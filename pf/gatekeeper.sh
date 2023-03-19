@@ -14,7 +14,7 @@ spartan=192.168.24.5
 redbox=192.168.24.6
 hades=192.168.24.7
 
-unix="{ $cracker , $hades , $redbox , $spartan }"
+unix="\"{ $cracker , $hades , $redbox , $spartan }\""
 
 SSH=6666
 IRC=6667
