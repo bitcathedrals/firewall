@@ -6,7 +6,10 @@ wifi="iwx0"
 ethernet="ure0"
 
 wireless="192.168.10.0/24"
+wireless_myip="192.168.10.189"
+
 wired="192.168.24.0/24"
+wired_myip="192.168.24.1"
 
 gatekeeper=192.168.24.1
 cracker=192.168.24.4
@@ -71,13 +74,13 @@ open_out $ethernet tcp $SSH
 
 # ssh server
 
-open_from tcp $SSH $wireless "5/10" 10
-open_from tcp $SSH $wired "5/10" 10
+open_from tcp $SSH $wireless_myip $wireless "5/1" 10
+open_from tcp $SSH $wired_myip $wired "5/1" 10
 
 # DNS server
 
-open_from udp $DOMAIN $wireless "25/1" 50
-open_from udp $DOMAIN $wired "25/1" 50
+open_from udp $DOMAIN $wireless_myip $wireless "50/1" 150
+open_from udp $DOMAIN $wired_myip "50/1" 150
 
 # IRC server
 
@@ -86,22 +89,22 @@ open_from udp $DOMAIN $wired "25/1" 50
 
 # rsync
 
-open_from tcp $RSYNC "{ $cracker , $hades , $redbox , $spartan }" "5/10" 10
+open_from tcp $RSYNC $wired_myip "{ $cracker , $hades , $redbox , $spartan }" "5/1" 10
 
 # NFS
 
-open_from udp $PORTMAP_UDP $wired "30/10" "25"
-open_from tcp $PORTMAP_TCP $wired "30/10" "25"
+open_from udp $PORTMAP_UDP $wired_myip $wired "30/10" "25"
+open_from tcp $PORTMAP_TCP $wired_myip $wired "30/10" "25"
 
-open_from udp $STATUS_UDP $wired "30/10" "25"
-open_from tcp $STATUS_TCP $wired "30/10" "25"
+open_from udp $STATUS_UDP $wired_myip $wired "30/10" "25"
+open_from tcp $STATUS_TCP $wired_myip $wired "30/10" "25"
 
-open_from udp $LOCK_UDP $wired "30/10" "25"
-open_from tcp $LOCK_TCP $wired "30/10" "25"
+open_from udp $LOCK_UDP $wired_myip $wired "30/10" "25"
+open_from tcp $LOCK_TCP $wired_myip $wired "30/10" "25"
 
-open_from udp $MOUNT_UDP $wired "30/10" "25"
-open_from tcp $MOUNT_TCP $wired "30/10" "25"
+open_from udp $MOUNT_UDP $wired_myip $wired "30/10" "25"
+open_from tcp $MOUNT_TCP $wired_myip $wired "30/10" "25"
 
-open_from udp $NFS_UDP $wired "30/10" "25"
-open_from tcp $NFS_TCP $wired "30/10" "25"
+open_from udp $NFS_UDP $wired_myip $wired "30/10" "25"
+open_from tcp $NFS_TCP $wired_myip $wired "30/10" "25"
 

@@ -128,25 +128,26 @@ SERVER
 
 # $1 = proto
 # $2 = port
-# $3 = network
-# $4 = rate limit
-# $5 = max connections
+# $3 = my ip
+# $4 = network
+# $5 = rate limit
+# $6 = max connections
 
 function open_from {
-  MAX=$5
+  MAX=$6
   if test -z "$MAX"
   then
     MAX=$DEFAULT_CON_MAX
   fi
 
-  RATE=$4
+  RATE=$5
   if test -z "$RATE"
   then
     RATE=$DEFAULT_RATE_MAX
   fi
 
   cat <<THROTTLE
-pass in proto $1 from $3 to any port $2 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
+pass in proto $1 from $4 to $3 port $2 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
 THROTTLE
 };
 
