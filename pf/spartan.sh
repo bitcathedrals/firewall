@@ -55,13 +55,15 @@ NFS_UDP=`rpc_port gatekeeper.wired nfs udp`
 NFS_TCP=`rpc_port gatekeeper.wired nfs tcp`
 
 
-# security and backup
+# SSH
 
 open_out $wifi tcp ssh
 open_out $wifi tcp $MY_SSH
 
 open_out $ethernet tcp ssh
 open_out $ethernet tcp $MY_SSH
+
+# backup
 
 open_out $ethernet tcp $RSYNC
 
@@ -103,8 +105,8 @@ open_out $ethernet tcp $RDP
 
 # ssh server
 
-open_server_throttle $wifi tcp $MY_SSH 10 "5/10"
-open_server_throttle $ethernet tcp $MY_SSH 10 "5/10"
+open_from tcp $wireless $MY_SSH "5/10" 10
+open_from tcp $wired $MY_SSH "5/10" 10
 
 # block ssh, telnet, ftp, rpc, smb
 block_stealth $wifi tcp 23
@@ -124,7 +126,6 @@ open_dhcp $vpn
 # basic services
 
 open_out $vpn udp domain
-open_out $vpn udp $NTP
 
 # security
 
