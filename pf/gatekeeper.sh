@@ -6,7 +6,7 @@ wifi="iwx0"
 ethernet="ure0"
 
 wireless="192.168.10.0/24"
-wired="192.168.24.1/24"
+wired="192.168.24.0/24"
 
 gatekeeper=192.168.24.1
 cracker=192.168.24.4
