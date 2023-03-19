@@ -67,7 +67,7 @@ open_out $wifi tcp "{ 80, 443 , 8080 }"
 open_out $wifi tcp ssh
 open_out $wifi tcp $SSH
 
-open_out $wired tcp ssh
+open_out $ethernet tcp ssh
 open_out $ethernet tcp $SSH
 
 # ssh server
