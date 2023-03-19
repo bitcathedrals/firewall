@@ -3,42 +3,25 @@
 pf_firewall=$HOME/code/firewall/pf/openbsd.sh
 
 wifi="iwx0"
-ethernet="eth0"
+ethernet="ure0"
+vpn="tun0"
 
 wireless="192.168.10.0/24"
 wired="192.168.24.0/24"
-
-vpn="tun0"
 
 IRC=6697
 
 MY_SSH=6666
 
-source $pf_firewall
-
-PORTMAP_UDP=`rpc_port gatekeeper.local portmapper udp`
-PORTMAP_TCP=`rpc_port gatekeeper.local portmapper tcp`
-
-STATUS_UDP=`rpc_port gatekeeper.local status udp`
-STATUS_TCP=`rpc_port gatekeeper.local status tcp`
-
-LOCK_UDP=`rpc_port gatekeeper.local nlockmgr udp`
-LOCK_TCP=`rpc_port gatekeeper.local nlockmgr tcp`
-
-MOUNT_UDP=`rpc_port gatekeeper.local mountd udp`
-MOUNT_TCP=`rpc_port gatekeeper.local mountd tcp`
-
-NFS_UDP=`rpc_port gatekeeper.local nfs udp`
-NFS_TCP=`rpc_port gatekeeper.local nfs tcp`
-
 RDP=3389
+
+source $pf_firewall
 
 #
 # basics policy
 #
 
 default_policy
-
 
 #
 # WiFi (local)
@@ -51,8 +34,26 @@ open_dhcp $wifi
 
 # basic services
 
-open_out $wifi udp domain
 open_out $wifi udp $NTP
+
+open_out $wifi udp domain
+open_out $ethernet udp domain
+
+PORTMAP_UDP=`rpc_port gatekeeper.wired portmapper udp`
+PORTMAP_TCP=`rpc_port gatekeeper.wired portmapper tcp`
+
+STATUS_UDP=`rpc_port gatekeeper.wired status udp`
+STATUS_TCP=`rpc_port gatekeeper.wired status tcp`
+
+LOCK_UDP=`rpc_port gatekeeper.wired nlockmgr udp`
+LOCK_TCP=`rpc_port gatekeeper.wired nlockmgr tcp`
+
+MOUNT_UDP=`rpc_port gatekeeper.wired mountd udp`
+MOUNT_TCP=`rpc_port gatekeeper.wired mountd tcp`
+
+NFS_UDP=`rpc_port gatekeeper.wired nfs udp`
+NFS_TCP=`rpc_port gatekeeper.wired nfs tcp`
+
 
 # security and backup
 
@@ -93,6 +94,10 @@ open_out $ethernet tcp $MOUNT_TCP
 
 open_out $ethernet udp $NFS_UDP
 open_out $ethernet tcp $NFS_TCP
+
+#
+# RDP
+#
 
 open_out $ethernet tcp $RDP
 
