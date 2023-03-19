@@ -59,7 +59,7 @@ open_out $wifi udp $NTP
 
 # outbound HTTP needed for updates
 
-open_out $wifi tcp "{ 80, 443 , 8080 }"
+open_out $wifi tcp "{ 80 , 443 , 8080 }"
 
 # SSH
 
