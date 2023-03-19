@@ -3,6 +3,11 @@
 pf_firewall=$HOME/code/firewall/pf/openbsd.sh
 
 wifi="iwx0"
+ethernet="eth0"
+
+wireless="192.168.10.0/24"
+wired="192.168.24.0/24"
+
 vpn="tun0"
 
 IRC=6697
@@ -25,6 +30,8 @@ MOUNT_TCP=`rpc_port gatekeeper.local mountd tcp`
 
 NFS_UDP=`rpc_port gatekeeper.local nfs udp`
 NFS_TCP=`rpc_port gatekeeper.local nfs tcp`
+
+RDP=3389
 
 #
 # basics policy
@@ -52,7 +59,10 @@ open_out $wifi udp $NTP
 open_out $wifi tcp ssh
 open_out $wifi tcp $MY_SSH
 
-open_out $wifi tcp $RSYNC
+open_out $ethernet tcp ssh
+open_out $ethernet tcp $MY_SSH
+
+open_out $ethernet tcp $RSYNC
 
 # VPN
 
@@ -69,24 +79,27 @@ open_out $wifi tcp "{ 194 , $IRC }"
 
 # nfs
 
-open_out $wifi udp $PORTMAP_UDP
-open_out $wifi tcp $PORTMAP_TCP
+open_out $ethernet udp $PORTMAP_UDP
+open_out $ethernet tcp $PORTMAP_TCP
 
-open_out $wifi udp $STATUS_UDP
-open_out $wifi tcp $STATUS_TCP
+open_out $ethernet udp $STATUS_UDP
+open_out $ethernet tcp $STATUS_TCP
 
-open_out $wifi udp $LOCK_UDP
-open_out $wifi tcp $LOCK_TCP
+open_out $ethernet udp $LOCK_UDP
+open_out $ethernet tcp $LOCK_TCP
 
-open_out $wifi udp $MOUNT_UDP
-open_out $wifi tcp $MOUNT_TCP
+open_out $ethernet udp $MOUNT_UDP
+open_out $ethernet tcp $MOUNT_TCP
 
-open_out $wifi udp $NFS_UDP
-open_out $wifi tcp $NFS_TCP
+open_out $ethernet udp $NFS_UDP
+open_out $ethernet tcp $NFS_TCP
+
+open_out $ethernet tcp $RDP
 
 # ssh server
 
 open_server_throttle $wifi tcp $MY_SSH 10 "5/10"
+open_server_throttle $ethernet tcp $MY_SSH 10 "5/10"
 
 # block ssh, telnet, ftp, rpc, smb
 block_stealth $wifi tcp 23
