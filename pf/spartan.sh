@@ -12,13 +12,15 @@ wireless_myip="192.168.10.138"
 wired="192.168.24.0/24"
 wired_myip="192.168.24.5"
 
-IRC=6697
-
-MY_SSH=6666
-
-RDP=3389
-
 source $pf_firewall
+
+#
+# get ips for gatekeeper
+#
+
+gatekeeper_wireless=`host_lookup gatekeeper.local`
+gatekeeper_wired=`host_lookup gatekeeper.local`
+
 
 #
 # basics policy
@@ -26,95 +28,86 @@ source $pf_firewall
 
 default_policy
 
+# WiFi/router
+
+open_router $wifi
+
 #
-# WiFi (local)
+# trusted services
 #
 
-# low level
+open_trusted $wifi
+open_trusted $ethernet
 
-open_icmp $wifi
-open_icmp $ethernet
+#
+# CLIENTS
+#
 
-open_dhcp $wifi
+# NFS related
 
-# basic services
+PORTMAP_UDP=`rpc_port $gatekeeper_wired portmapper udp`
+PORTMAP_TCP=`rpc_port $gatekeeper_wired portmapper tcp`
 
-open_out $wifi udp $NTP
+STATUS_UDP=`rpc_port $gatekeeper_wired status udp`
+STATUS_TCP=`rpc_port $gatekeeper_wired status tcp`
 
-open_out $wifi udp domain
-open_out $ethernet udp domain
+LOCK_UDP=`rpc_port $gatekeeper_wired nlockmgr udp`
+LOCK_TCP=`rpc_port $gatekeeper_wired nlockmgr tcp`
 
-PORTMAP_UDP=`rpc_port gatekeeper.wired portmapper udp`
-PORTMAP_TCP=`rpc_port gatekeeper.wired portmapper tcp`
+MOUNT_UDP=`rpc_port $gatekeeper_wired mountd udp`
+MOUNT_TCP=`rpc_port $gatekeeper_wired mountd tcp`
 
-STATUS_UDP=`rpc_port gatekeeper.wired status udp`
-STATUS_TCP=`rpc_port gatekeeper.wired status tcp`
+NFS_UDP=`rpc_port $gatekeeper_wired nfs udp`
+NFS_TCP=`rpc_port $gatekeeper_wired nfs tcp`
 
-LOCK_UDP=`rpc_port gatekeeper.wired nlockmgr udp`
-LOCK_TCP=`rpc_port gatekeeper.wired nlockmgr tcp`
+open_to $gatekeeper_wired udp $PORTMAP_UDP
+open_to $gatekeeper_wired tcp $PORTMAP_TCP
 
-MOUNT_UDP=`rpc_port gatekeeper.wired mountd udp`
-MOUNT_TCP=`rpc_port gatekeeper.wired mountd tcp`
+open_to $gatekeeper_wired udp $STATUS_UDP
+open_to $gatekeeper_wired tcp $STATUS_TCP
 
-NFS_UDP=`rpc_port gatekeeper.wired nfs udp`
-NFS_TCP=`rpc_port gatekeeper.wired nfs tcp`
+open_to $gatekeeper_wired udp $LOCK_UDP
+open_to $gatekeeper_wired tcp $LOCK_TCP
 
-# SSH
+open_to $gatekeeper_wired udp $MOUNT_UDP
+open_to $gatekeeper_wired tcp $MOUNT_TCP
 
-open_out $wifi tcp ssh
-open_out $wifi tcp $MY_SSH
+open_to $gatekeeper_wired udp $NFS_UDP
+open_to $gatekeeper_wired tcp $NFS_TCP
 
-open_out $ethernet tcp ssh
-open_out $ethernet tcp $MY_SSH
 
 # backup
 
-open_out $ethernet tcp $RSYNC
+open_to $gatekeeper_wired tcp $RSYNC
+
+# RDP
+
+open_out $ethernet tcp $RDP
+
+#
+# SERVERS
+#
+
+# ssh server
+
+open_from tcp "$SSH" $wireless_myip $wireless "5/10" 10
+open_from tcp "$SSH" $wired_myip $wired "5/10" 10
 
 # VPN
 
 open_out $wifi udp openvpn
 
-# web and email
+# web,email,IRC on Wi-Fi
 
-open_out $wifi tcp "{ 80, 443 , 8080 }"
-open_out $wifi tcp "{ 25 , 2525 , 587 , 143 , 993 , 465 }"
-
-# irc
+open_out $wifi tcp "$WEB"
+open_out $wifi tcp "$MAIL"
 
 open_out $wifi tcp "{ 194 , $IRC }"
 
-# nfs
-
-open_out $ethernet udp $PORTMAP_UDP
-open_out $ethernet tcp $PORTMAP_TCP
-
-open_out $ethernet udp $STATUS_UDP
-open_out $ethernet tcp $STATUS_TCP
-
-open_out $ethernet udp $LOCK_UDP
-open_out $ethernet tcp $LOCK_TCP
-
-open_out $ethernet udp $MOUNT_UDP
-open_out $ethernet tcp $MOUNT_TCP
-
-open_out $ethernet udp $NFS_UDP
-open_out $ethernet tcp $NFS_TCP
-
-#
-# RDP
-#
-
-open_out $ethernet tcp $RDP
-
-# ssh server
-
-open_from tcp $MY_SSH $wireless_myip $wireless "5/10" 10
-open_from tcp $MY_SSH $wired_myip $wired "5/10" 10
 
 # block ssh, telnet, ftp, rpc, smb
-block_stealth $wifi tcp 23
 block_stealth $wifi tcp 21
+block_stealth $wifi tcp 22
 block_stealth $wifi tcp 23
 block_stealth $wifi "{ tcp , udp }" 111
 block_stealth $wifi "{ tcp , udp }" "{ 137 , 138 , 139 }"
@@ -129,18 +122,18 @@ open_dhcp $vpn
 
 # basic services
 
-open_out $vpn udp domain
+open_out $vpn "{ udp , tcp }" domain
 
 # security
 
-open_out $vpn tcp ssh
-open_out $vpn tcp $MY_SSH
+open_out $vpn tcp "$SSH"
 
 # web and email and ftp
 
-open_out $vpn tcp "{ 80 , 443 , 8080 }"
-open_out $vpn tcp "{ 25 , 2525 , 587 , 143 , 993 , 465 }"
-open_out $vpn tcp ftp
+open_out $vpn tcp "$WEB"
+open_out $vpn tcp "$MAIL"
+
+open_out $vpn tcp "$FTP"
 
 # irc
 

@@ -5,12 +5,32 @@ DEFAULT_CON_MAX=100
 DEFAULT_RATE_MAX="15/30"
 
 # port assignments
+MY_SSH=6666
+SSH="{ ssh , sftp , $MY_SSH }"
+
 NTP=123
 DOMAIN=53
 
+WEB="{ 80 , 443 , 8080 }"
+MAIL="{ 25 , 2525 , 587 , 143 , 993 , 465 }"
+FTP="{ ftp , ftp-data }"
+
 RSYNC=873
+IRC=6697
+RDP=3389
 
 LO=`ifconfig | grep lo | head -n 1 | cut -d ':' -f 1`
+
+#
+# lookup the ip address for a host
+#
+
+# $1 hostname
+
+function host_lookup {
+  nslookup $1 | grep -i address | cut -d ' ' -f 2 | grep -v -i 'address' | tail -n 1;
+}
+
 
 #
 # default_policy
@@ -107,7 +127,22 @@ CLIENT
 };
 
 #
-# open_on
+# open to a specific host
+#
+
+#
+# open to a specific host
+#
+
+function open_to {
+  cat <<CLIENT
+pass out proto $2 from any to $1 port $3 keep state
+CLIENT
+};
+
+
+#
+# open_in
 #
 
 # open server access from outside
@@ -116,7 +151,7 @@ CLIENT
 # $2 = proto
 # $3 = port
 
-function open_on {
+function open_in {
   cat <<SERVER
 pass in on $1 proto $2 from any to any port $3 keep state
 SERVER
@@ -149,6 +184,24 @@ function open_from {
   cat <<THROTTLE
 pass in proto $1 from $4 to $3 port $2 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
 THROTTLE
+};
+
+#
+# open standard trusted services
+#
+
+# $1 interface
+
+function open_trusted {
+  open_icmp $1
+  open_out $1 "{ udp , tcp }" domain
+
+  open_out $1 tcp "$SSH"
+};
+
+function open_router {
+  open_dhcp $1
+  open_out $1 udp $NTP
 };
 
 #
