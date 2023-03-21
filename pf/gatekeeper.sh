@@ -17,12 +17,6 @@ spartan=192.168.24.5
 redbox=192.168.24.6
 hades=192.168.24.7
 
-
-SSH=6666
-IRC=6667
-
-RSYNC=873
-
 source $pf_openbsd
 
 PORTMAP_UDP=`rpc_port localhost portmapper udp`
@@ -48,44 +42,33 @@ rpc_print
 
 default_policy
 
-# basic networking
+# basic network services
 
-open_icmp $wifi
-open_icmp $ethernet
+open_router $wifi
 
-open_dhcp $wifi
+# trusted services
 
-# outbound - basic IP services
-
-open_out $wifi udp $DOMAIN
-open_out $wifi udp $NTP
+open_trusted $wifi
+open_trusted $ethernet
 
 # outbound HTTP needed for updates
 
-open_out $wifi tcp "{ 80 , 443 , 8080 }"
-
-# SSH
-
-open_out $wifi tcp ssh
-open_out $wifi tcp $SSH
-
-open_out $ethernet tcp ssh
-open_out $ethernet tcp $SSH
+open_out $wifi tcp "$WEB"
 
 # ssh server
 
-open_from tcp $SSH $wireless_myip $wireless "5/1" 10
-open_from tcp $SSH $wired_myip $wired "5/1" 10
+open_from tcp "$SSH" $wireless_myip $wireless "5/1" 10
+open_from tcp "$SSH" $wired_myip $wired "5/1" 10
 
 # DNS server
 
-open_from udp $DOMAIN $wireless_myip $wireless "50/1" 150
-open_from udp $DOMAIN $wired_myip $wired "50/1" 150
+open_from "{ udp , tcp }" $DOMAIN $wireless_myip $wireless "50/1" 150
+open_from "{ udp , tcp }" $DOMAIN $wired_myip $wired "50/1" 150
 
 # IRC server
 
-# open_on $wifi tcp $IRC 10 "5/10"
-# open_on $ethernet tcp $IRC 10 "5/10"
+# open_in $wifi tcp $IRC 10 "5/10"
+# open_in $ethernet tcp $IRC 10 "5/10"
 
 # rsync
 
