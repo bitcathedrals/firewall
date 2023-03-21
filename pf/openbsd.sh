@@ -69,7 +69,7 @@ PORTLIST
 
 function open_icmp {
   cat <<ICMP
-pass in on $1 proto icmp
+pass in on $1 proto icmp keep state
 ICMP
 };
 

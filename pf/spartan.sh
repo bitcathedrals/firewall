@@ -33,6 +33,8 @@ default_policy
 # low level
 
 open_icmp $wifi
+open_icmp $ethernet
+
 open_dhcp $wifi
 
 # basic services
