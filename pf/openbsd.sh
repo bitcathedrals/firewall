@@ -130,9 +130,9 @@ CLIENT
 # open to a specific host
 #
 
-#
-# open to a specific host
-#
+# $1 = host
+# $2 = proto
+# $3 = port
 
 function open_to {
   cat <<CLIENT
