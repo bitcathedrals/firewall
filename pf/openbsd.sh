@@ -39,6 +39,41 @@ function broadcast_lookup {
   ifconfig | grep inet | grep $1 | tr -s ' ' | cut -d ' ' -f 6
 }
 
+# $1 macro name
+# $2 macro value
+function macro {
+  echo "$1 = \"$2\"" >>${HOSTNAME}.pf
+  echo "MACRO $1 = $2" >/dev/stderr
+};
+
+
+# $1 macro name
+# $2 hostname
+function macro_host {
+  ip=`host_lookup $2`
+  echo "$1 = \"$ip\"" >>${HOSTNAME}.pf
+  echo "MACRO $1 = $ip" >/dev/stderr
+};
+
+# $1 = name
+# $2 = self hostname
+# $3 = subnet
+
+function macro_network {
+  ip=`host_lookup $2`
+  broadcast=`broadcast_lookup $ip`
+
+  cat >>${HOSTNAME}.pf <<NETWORK
+${1}Net = "$3"
+${1}IP = "$ip"
+${1}Brd = "$broadcast"
+NETWORK
+
+  echo "$1 = $3" >/dev/stderr
+  echo "${1}IP = $ip" >/dev/stderr
+  echo "${1}Brd = $broadcast" >/dev/stderr;
+}
+
 #
 # default_policy
 #
