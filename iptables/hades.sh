@@ -11,6 +11,7 @@ WIRELESS="192.168.10.0/24"
 WIRED="192.168.24.0/24"
 
 SSH="ssh,6666"
+RDP="3389"
 
 # Wi-Fi
 
@@ -74,6 +75,7 @@ open_tcp_server $WIRED $SSH 10
 open_tcp_server $WIRELESS 80 10
 open_tcp_server $WIRED 80 10
 
+open_tcp_server $WIRED $RDP 10
 
 
 
