@@ -19,7 +19,7 @@ source $pf_firewall
 #
 
 gatekeeper_wireless=`host_lookup gatekeeper.local`
-gatekeeper_wired=`host_lookup gatekeeper.local`
+gatekeeper_wired=`host_lookup gatekeeper.wired`
 
 
 #

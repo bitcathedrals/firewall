@@ -1,0 +1,20 @@
+block drop all
+
+table <blacklist> persist
+block quick from <blacklist>
+
+pass in on lo0
+pass out on lo0
+
+antispoof for lo0
+
+pass out proto icmp to any keep state
+pass out on iwx0 proto udp from any to any port { 67, 68 }
+pass in on iwx0 proto udp from any to any port { 67, 68 }
+pass out on iwx0 proto udp from any to any port 123 keep state
+pass in on iwx0 proto icmp keep state
+pass out on iwx0 proto { udp , tcp } from any to any port domain keep state
+pass out on iwx0 proto tcp from any to any port { ssh , sftp , 6666 } keep state
+pass in on ure0 proto icmp keep state
+pass out on ure0 proto { udp , tcp } from any to any port domain keep state
+pass out on ure0 proto tcp from any to any port { ssh , sftp , 6666 } keep state
