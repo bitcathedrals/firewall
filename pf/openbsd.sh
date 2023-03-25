@@ -74,6 +74,43 @@ NETWORK
   echo "${1}Brd = $broadcast" >/dev/stderr;
 }
 
+# $1 = host
+# $2 = service
+# $3 = protocol
+
+function rpc_port {
+  rpcinfo -p $1 | grep $2 | grep $3 | head -n 1 | tr -s ' ' | cut -d ' ' -f 5;
+}
+
+# $1 = host
+
+function rpc_map {
+  PORTMAP_UDP=`rpc_port $1 portmapper udp`
+  PORTMAP_TCP=`rpc_port $1 portmapper tcp`
+
+  STATUS_UDP=`rpc_port $1 status udp`
+  STATUS_TCP=`rpc_port $1 status tcp`
+
+  LOCK_UDP=`rpc_port $1 nlockmgr udp`
+  LOCK_TCP=`rpc_port $1 nlockmgr tcp`
+
+  MOUNT_UDP=`rpc_port $1 mountd udp`
+  MOUNT_TCP=`rpc_port $1 mountd tcp`
+
+  NFS_UDP=`rpc_port $1 nfs udp`
+  NFS_TCP=`rpc_port $1 nfs tcp`
+
+  cat >/dev/stderr <<PORTLIST
+rpc ports:
+
+portmap udp = $PORTMAP_UDP tcp = $PORTMAP_TCP
+status udp = $STATUS_UDP tcp = $STATUS_TCP
+lock udp = $LOCK_UDP tcp = $LOCK_TCP
+mount udp = $MOUNT_UDP tcp = $MOUNT_TCP
+NFS udp = $NFS_UDP tcp = $NFS_TCP
+PORTLIST
+}
+
 #
 # default_policy
 #
@@ -97,30 +134,6 @@ antispoof for $LO
 pass out proto icmp keep state
 DEFAULT_POLICY
 };
-
-#
-# rpc ports
-#
-
-# $1 = host
-# $2 = service
-# $3 = protocol
-
-function rpc_port {
-  rpcinfo -p $1 | grep $2 | grep $3 | head -n 1 | tr -s ' ' | cut -d ' ' -f 5;
-}
-
-function rpc_print {
-  cat >>${HOSTNAME}.pf >/dev/stderr <<PORTLIST
-rpc ports:
-
-portmap udp = $PORTMAP_UDP tcp = $PORTMAP_TCP
-status udp = $STATUS_UDP tcp = $STATUS_TCP
-lock udp = $LOCK_UDP tcp = $LOCK_TCP
-mount udp = $MOUNT_UDP tcp = $MOUNT_TCP
-NFS udp = $NFS_UDP tcp = $NFS_TCP
-PORTLIST
-}
 
 #
 # in_icmp
