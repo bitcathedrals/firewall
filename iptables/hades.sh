@@ -23,13 +23,20 @@ icmp_ping_throttle $WIFI
 
 tcp_core $WIFI
 tcp_drop_broadcast $WIFI
+
 tcp_any_out $WIFI
 
 udp_core $WIFI
 udp_drop_broadcast $WIFI
+
 udp_any_out $WIFI
 
 open_dhcp $WIFI
+
+# public servers
+
+open_tcp_server $WIRELESS $SSH 10
+open_tcp_server $WIRELESS 80 10
 
 # Ethernet
 
@@ -45,6 +52,7 @@ tcp_any_out $ETHERNET
 
 udp_core $ETHERNET
 udp_drop_broadcast $ETHERNET
+
 udp_any_out $ETHERNET
 
 #
@@ -69,10 +77,6 @@ open_dhcp $VPN
 
 # local servers
 
-open_tcp_server $WIRELESS $SSH 10
 open_tcp_server $WIRED $SSH 10
-
-open_tcp_server $WIRELESS 80 10
 open_tcp_server $WIRED 80 10
-
 open_tcp_server $WIRED $RDP 10
