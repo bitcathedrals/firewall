@@ -3,7 +3,7 @@
 # Generic Firewall config for simple client host
 #
 
-WIFI=wlp166s0
+WIFI=wlan0
 ETHERNET=eth2
 VPN=tun0
 
