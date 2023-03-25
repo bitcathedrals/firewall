@@ -1,37 +1,15 @@
 #! /usr/bin/env bash
 
-source $HOME/code/firewall/pf/openbsd.sh
+macro intWifi iwx0
+macro intEthernet ure0
 
-wifi="iwx0"
-ethernet="ure0"
+macro_network wireless gatekeeper.local "192.168.10.0/24"
+macro_network wired gatekeeper.wired "192.168.24.0/24"
 
-wireless="192.168.10.0/24"
-wireless_myip="192.168.10.189"
-
-wired="192.168.24.0/24"
-wired_myip="192.168.24.1"
-
-cracker_wired=`host_lookup cracker.wired`
-hades_wired=`host_lookup hades.wired`
-redbox_wired=`host_lookup redbox.wired`
-spartan_wired=`host_lookup spartan.wired`
-
-PORTMAP_UDP=`rpc_port localhost portmapper udp`
-PORTMAP_TCP=`rpc_port localhost portmapper tcp`
-
-STATUS_UDP=`rpc_port localhost status udp`
-STATUS_TCP=`rpc_port localhost status tcp`
-
-LOCK_UDP=`rpc_port localhost nlockmgr udp`
-LOCK_TCP=`rpc_port localhost nlockmgr tcp`
-
-MOUNT_UDP=`rpc_port localhost mountd udp`
-MOUNT_TCP=`rpc_port localhost mountd tcp`
-
-NFS_UDP=`rpc_port localhost nfs udp`
-NFS_TCP=`rpc_port localhost nfs tcp`
-
-rpc_print
+macro_host crackerWired "cracker.wired"
+macro_host hadesWired "hades.wired"
+macro_host redboxWired "redbox.wired"
+macro_host spartanWired "spartan.wired"
 
 #
 # drop policy
@@ -41,45 +19,32 @@ default_policy
 
 # basic network services
 
-open_router $wireless_myip $wifi
+open_router \$wirelessIP \$intWifi
 
-# trusted services
+# WiFi
 
-open_trusted $wireless_myip
-open_trusted $wired_myip
+open_trusted \$wirelessIP
 
-# outbound HTTP needed for updates
+# clients
 
-outbound $wireless_myip tcp "$WEB"
+outbound \$wirelessIP tcp "$WEB"
 
-# ssh server
+# servers
 
-in_from $wireless_myip tcp "$SSH" $wireless "5/1" 10
-in_from $wired_myip tcp "$SSH" $wired "5/1" 10
+in_from \$wirelessIP tcp "$SSH" \$wirelessNet "5/1" 10
+in_from \$wirelessIP "{ udp , tcp }" $DOMAIN \$wirelessNet "50/1" 150
 
-# DNS server
+# Wired
 
-in_from $wireless_myip "{ udp , tcp }" $DOMAIN $wireless "50/1" 150
-in_from $wired_myip "{ udp , tcp }" $DOMAIN $wired "50/1" 150
+open_trusted \$wiredIP
 
-# rsync
+# servers
 
-in_from $wired_myip tcp $RSYNC "{ $cracker_wired , $hades_wired , $redbox_wired , $spartan_wired }" "5/1" 10
+in_from \$wiredIP tcp "$SSH" \$wiredNet "5/1" 10
+in_from \$wiredIP "{ udp , tcp }" $DOMAIN \$wiredNet "50/1" 150
+in_from \$wiredIP tcp $RSYNC "{ \$crackerWired , \$hadesWired , \$redboxWired , \$spartanWired }" "5/1" 10
 
-# NFS
+in_from \$wiredIP udp "{ $PORTMAP_UDP , $STATUS_UDP , $LOCK_UDP , $MOUNT_UDP , $NFS_UDP }" \$wiredNet "30/10" "25"
+in_from \$wiredIP tcp "{ $PORTMAP_TCP , $STATUS_TCP , $LOCK_TCP , $MOUNT_TCP , $NFS_TCP }" \$wiredNet "30/10" "25"
 
-in_from $wired_myip udp $PORTMAP_UDP $wired "30/10" "25"
-in_from $wired_myip tcp $PORTMAP_TCP $wired "30/10" "25"
-
-in_from $wired_myip udp $STATUS_UDP $wired "30/10" "25"
-in_from $wired_myip tcp $STATUS_TCP  $wired "30/10" "25"
-
-in_from $wired_myip udp $LOCK_UDP $wired "30/10" "25"
-in_from $wired_myip tcp $LOCK_TCP $wired "30/10" "25"
-
-in_from $wired_myip udp $MOUNT_UDP $wired "30/10" "25"
-in_from $wired_myip tcp $MOUNT_TCP  $wired "30/10" "25"
-
-in_from $wired_myip udp $NFS_UDP $wired "30/10" "25"
-in_from $wired_myip tcp $NFS_TCP $wired "30/10" "25"
 
