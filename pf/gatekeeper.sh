@@ -11,6 +11,8 @@ macro_host hadesWired "hades.wired"
 macro_host redboxWired "redbox.wired"
 macro_host spartanWired "spartan.wired"
 
+rpc_map
+
 #
 # drop policy
 #
