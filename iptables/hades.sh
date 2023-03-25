@@ -76,9 +76,3 @@ open_tcp_server $WIRELESS 80 10
 open_tcp_server $WIRED 80 10
 
 open_tcp_server $WIRED $RDP 10
-
-
-
-
-
-
