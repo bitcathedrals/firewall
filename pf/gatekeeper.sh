@@ -54,8 +54,8 @@ outbound $wireless_myip tcp "$WEB"
 
 # ssh server
 
-in_from tcp $wireless_myip "$SSH" $wireless "5/1" 10
-in_from tcp $wired_myip "$SSH" $wired "5/1" 10
+in_from $wireless_myip tcp "$SSH" $wireless "5/1" 10
+in_from $wired_myip tcp "$SSH" $wired "5/1" 10
 
 # DNS server
 
