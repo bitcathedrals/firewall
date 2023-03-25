@@ -98,22 +98,6 @@ pass in proto icmp to $1 keep state
 ICMP
 };
 
-
-#
-# open_dhcp
-#
-
-# open dhcp for interface
-
-# $1 = interface
-
-function open_dhcp {
-  cat <<DHCP
-pass out on $1 proto udp from any to any port { 67, 68 }
-pass in on $1 proto udp from any to any port { 67, 68 }
-DHCP
-};
-
 #
 # inbound
 #
@@ -190,6 +174,21 @@ CLIENT
 };
 
 #
+# open_dhcp
+#
+
+# open dhcp for interface
+
+# $1 = interface
+
+function open_dhcp {
+  cat <<DHCP
+pass out on $1 proto udp from any to any port { 67, 68 }
+pass in on $1 proto udp from any to any port { 67, 68 }
+DHCP
+};
+
+#
 # open_trusted - open trusted services
 #
 
@@ -206,9 +205,16 @@ function open_trusted {
 # open_router - assume internet connection
 #
 
+# $1 my address
+# $2 dhcp inteface - optional
+
 function open_router {
-  open_dhcp $1
   outbound $1 udp $NTP
+
+  if [[ -n "$2" ]]
+  then
+    open_dhcp $2
+  fi;
 };
 
 #

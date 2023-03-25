@@ -42,7 +42,7 @@ default_policy
 
 # WiFi/router
 
-open_router $wifi
+open_router $wireless_myip $wifi
 
 #
 # trusted services
