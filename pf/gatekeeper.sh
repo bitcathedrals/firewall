@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-pf_openbsd=$HOME/code/firewall/pf/openbsd.sh
+source $HOME/code/firewall/pf/openbsd.sh
 
 wifi="iwx0"
 ethernet="ure0"
@@ -11,13 +11,10 @@ wireless_myip="192.168.10.189"
 wired="192.168.24.0/24"
 wired_myip="192.168.24.1"
 
-gatekeeper=192.168.24.1
-cracker=192.168.24.4
-spartan=192.168.24.5
-redbox=192.168.24.6
-hades=192.168.24.7
-
-source $pf_openbsd
+cracker_wired=`host_lookup cracker.wired`
+hades_wired=`host_lookup hades.wired`
+redbox_wired=`host_lookup redbox.wired`
+spartan_wired=`host_lookup spartan.wired`
 
 PORTMAP_UDP=`rpc_port localhost portmapper udp`
 PORTMAP_TCP=`rpc_port localhost portmapper tcp`
@@ -44,50 +41,45 @@ default_policy
 
 # basic network services
 
-open_router $wifi
+open_router $wireless_myip $wifi
 
 # trusted services
 
-open_trusted $wifi
-open_trusted $ethernet
+open_trusted $wireless_myip
+open_trusted $wired_myip
 
 # outbound HTTP needed for updates
 
-open_out $wifi tcp "$WEB"
+outbound $wireless_myip tcp "$WEB"
 
 # ssh server
 
-open_from tcp "$SSH" $wireless_myip $wireless "5/1" 10
-open_from tcp "$SSH" $wired_myip $wired "5/1" 10
+in_from tcp $wireless_myip "$SSH" $wireless "5/1" 10
+in_from tcp $wired_myip "$SSH" $wired "5/1" 10
 
 # DNS server
 
-open_from "{ udp , tcp }" $DOMAIN $wireless_myip $wireless "50/1" 150
-open_from "{ udp , tcp }" $DOMAIN $wired_myip $wired "50/1" 150
-
-# IRC server
-
-# open_in $wifi tcp $IRC 10 "5/10"
-# open_in $ethernet tcp $IRC 10 "5/10"
+in_from $wireless_myip "{ udp , tcp }" $DOMAIN $wireless "50/1" 150
+in_from $wired_myip "{ udp , tcp }" $DOMAIN $wired "50/1" 150
 
 # rsync
 
-open_from tcp $RSYNC $wired_myip "{ $cracker , $hades , $redbox , $spartan }" "5/1" 10
+in_from $wired_myip tcp $RSYNC "{ $cracker_wired , $hades_wired , $redbox_wired , $spartan_wired }" "5/1" 10
 
 # NFS
 
-open_from udp $PORTMAP_UDP $wired_myip $wired "30/10" "25"
-open_from tcp $PORTMAP_TCP $wired_myip $wired "30/10" "25"
+in_from $wired_myip udp $PORTMAP_UDP $wired "30/10" "25"
+in_from $wired_myip tcp $PORTMAP_TCP $wired "30/10" "25"
 
-open_from udp $STATUS_UDP $wired_myip $wired "30/10" "25"
-open_from tcp $STATUS_TCP $wired_myip $wired "30/10" "25"
+in_from $wired_myip udp $STATUS_UDP $wired "30/10" "25"
+in_from $wired_myip tcp $STATUS_TCP  $wired "30/10" "25"
 
-open_from udp $LOCK_UDP $wired_myip $wired "30/10" "25"
-open_from tcp $LOCK_TCP $wired_myip $wired "30/10" "25"
+in_from $wired_myip udp $LOCK_UDP $wired "30/10" "25"
+in_from $wired_myip tcp $LOCK_TCP $wired "30/10" "25"
 
-open_from udp $MOUNT_UDP $wired_myip $wired "30/10" "25"
-open_from tcp $MOUNT_TCP $wired_myip $wired "30/10" "25"
+in_from $wired_myip udp $MOUNT_UDP $wired "30/10" "25"
+in_from $wired_myip tcp $MOUNT_TCP  $wired "30/10" "25"
 
-open_from udp $NFS_UDP $wired_myip $wired "30/10" "25"
-open_from tcp $NFS_TCP $wired_myip $wired "30/10" "25"
+in_from $wired_myip udp $NFS_UDP $wired "30/10" "25"
+in_from $wired_myip tcp $NFS_TCP $wired "30/10" "25"
 
