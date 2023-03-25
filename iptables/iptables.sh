@@ -5,7 +5,9 @@
 #
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
-CONFIG=/etc/firewall/$HOST.sh
+
+SYS_CONFIG=/etc/firewall/$HOST.sh
+CUR_CONFIG=$HOST.sh
 
 echo "firewall.sh: executing for host: $HOST"
 
@@ -15,7 +17,7 @@ function rule {
     echo "debug: $*"
   fi
 
-  eval "iptables $*"
+  eval "doas iptables $*"
 
   if [[ $? -ne 0 ]]
   then
@@ -185,6 +187,24 @@ function nat {
   rule -A FORWARD -o $1 -j ACCEPT;
 };
 
+function set_sys {
+  doas sysctl ${1}="${2}"
+};
+
+function configure_system {
+  set_sys net.ipv4.tcp_ecn 1
+  set_sys net.ipv4.tcp_ecn 1
+  set_sys net.ipv4.tcp_sack 1
+  set_sys net.ipv4.tcp_window_scaling 1
+  set_sys net.ipv4.tcp_syncookies 1
+  set_sys net.ipv4.conf.all.accept_source_route 0
+  set_sys net.ipv4.conf.all.accept_redirects 0
+  set_sys net.ipv4.conf.all.log_martians 1
+  set_sys net.ipv4.ip_local_port_range "10000 65000"
+  set_sys net.ipv4.conf.all.arp_ignore 1
+  set_sys net.ipv4.ip_default_ttl 97
+};
+
 case $1 in
   "open")
     open_policy
@@ -197,17 +217,7 @@ case $1 in
     # system configuration
     #
 
-    sysctl net.ipv4.tcp_ecn="1"
-    sysctl net.ipv4.tcp_ecn="1"
-    sysctl net.ipv4.tcp_sack="1"
-    sysctl net.ipv4.tcp_window_scaling="1"
-    sysctl net.ipv4.tcp_syncookies="1"
-    sysctl net.ipv4.conf.all.accept_source_route="0"
-    sysctl net.ipv4.conf.all.accept_redirects="0"
-    sysctl net.ipv4.conf.all.log_martians="1"
-    sysctl net.ipv4.ip_local_port_range="10000 65000"
-    sysctl net.ipv4.conf.all.arp_ignore="1"
-    sysctl net.ipv4.ip_default_ttl="97"
+    configure_system
 
     #
     # loopback
@@ -360,10 +370,21 @@ case $1 in
     # load the config
     #
 
-    if [[ -f $CONFIG ]]
+    if [[ -f $SYS_CONFIG ]]
     then
-      echo "firewall.sh: configuring with $CONFIG"
-      source $CONFIG
+      echo "firewall.sh: loading system configuration: $CONFIG"
+      source $SYS_CONFIG
+    fi
+  ;;
+  "dev")
+    #
+    # load the config
+    #
+
+    if [[ -f $CUR_CONFIG ]]
+    then
+      echo "firewall.sh: loading development configuration: $CONFIG"
+      source $CUR_CONFIG
     fi
   ;;
   "reload")
@@ -380,8 +401,8 @@ case $1 in
     $0 delete
     $0 open
   ;;
-  "list")
-    iptables -v --list
+  "rules")
+    doas iptables -v --list
   ;;
   "help"|*)
     cat <<HELP
@@ -392,8 +413,11 @@ close  = default DROP policy
 init   = initialize the kernel and chains
 
 flush  = flush chains
-load   = load the firewall rules
+load   = load the system rules
 reload = re-initialize the firewall
+
+dev    = load development rules
+rules  = list loaded rules
 
 start  = init, load, and set close policy
 stop   = flush, delete, and set open policy
