@@ -418,6 +418,14 @@ case $1 in
   "rules")
     doas iptables -v --list
   ;;
+  "install")
+    test -d /etc/firewall || doas mkdir -p /etc/firewall
+    doas cp $CUR_CONFIG $SYS_CONFIG
+    doas cp iptables.sh /etc/firewall/iptables.sh
+    doas cp firewall.service /lib/systemd/system/
+    doas systemctl daemon-reload
+    doas systemctl enable firewall.service
+  ;;
   "help"|*)
     cat <<HELP
 firewall.sh
