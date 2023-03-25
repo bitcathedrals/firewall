@@ -21,6 +21,8 @@ source $pf_firewall
 gatekeeper_wireless=`host_lookup gatekeeper.local`
 gatekeeper_wired=`host_lookup gatekeeper.wired`
 
+echo "gatekeeper wireless = $gatekeeper_wireless" >/dev/stderr
+echo "gatekeeper wired = $gatekeeper_wired" >/dev/stderr
 
 #
 # basics policy
