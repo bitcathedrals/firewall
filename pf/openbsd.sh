@@ -47,6 +47,8 @@ function broadcast_lookup {
 
 function default_policy {
   cat >>${HOSTNAME}.pf <<DEFAULT_POLICY
+match in all scrub (no-df)
+
 block drop all
 
 table <blacklist> persist
