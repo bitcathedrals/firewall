@@ -149,46 +149,60 @@ function open_dhcp {
 };
 
 function open_udp_out {
-  rule -A udp_con_out -p udp -o $1 --dport $2 -m state --state NEW -j ACCEPT;
+  rule -A udp_con_out -p udp -d $1 --dport $2 -m state --state NEW -j ACCEPT;
 };
 
 function open_tcp_out {
-  rule -A tcp_con_out -p tcp -o $1 --dport $2 -m state --state NEW -j ACCEPT;
+  rule -A tcp_con_out -p tcp -d $1 --dport $2 -m state --state NEW -j ACCEPT;
 };
 
-function open_udp_server {
-  rule -A udp_filter_in -p udp -i $1 --dport $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
-  rule -A udp_filter_in -p udp -i $1 --dport $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
+# $1 = source address/network
+# $2 = port
+# $3 = maximum connections
 
-  rule -A udp_srv_in -p tcp -i $1 --dport $2 -m state --state NEW -j ACCEPT
+function open_udp_server {
+  rule -A udp_filter_in -p udp -s $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
+  rule -A udp_filter_in -p udp -s $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
+
+  rule -A udp_srv_in -p tcp -s $1 --match multiport --dports $2 -m state --state NEW -j ACCEPT
 }
+
+# $1 = source address/network
+# $2 = port
+# $3 = maximum connection limit
 
 function open_tcp_server {
-  rule -A tcp_filter_in -p tcp -i $1 --dport $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
-  rule -A tcp_filter_in -p tcp -i $1 --dport $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
+  rule -A tcp_filter_in -p tcp -s $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
+  rule -A tcp_filter_in -p tcp -s $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
 
-  rule -A tcp_srv_in -p tcp -i $1 --dport $2 -m state --state NEW -j ACCEPT
+  rule -A tcp_srv_in -p tcp -s $1 --match multiport --dports $2 -m state --state NEW -j ACCEPT
 }
+
+# $1 = source address network
+# $2 = destination port
 
 function stealth_udp_block {
-  rule -I udp_filter_in -p udp -i $1 --dport $2 -j REJECT --reject-with icmp-host-unreachable;
+  rule -I udp_filter_in -p udp -s $1 --dport $2 -j REJECT --reject-with icmp-host-unreachable;
 }
+
+# $1 = source address network
+# $2 = destination port
 
 function stealth_tcp_block {
-  rule -I tcp_filter_in -p tcp -i $1 --dport $2 -j REJECT --reject-with icmp-host-unreachable;
+  rule -I tcp_filter_in -p tcp -s $1 --dport $2 -j REJECT --reject-with icmp-host-unreachable;
 }
 
+function set_sys {
+  doas sysctl ${1}="${2}"
+};
+
 function nat {
-  sysctl net.ipv4.ip_forward="1"
+  set_sys net.ipv4.ip_forward 1
 
   rule -t nat -A POSTROUTING  -o $1  -j MASQUERADE
 
   rule -A FORWARD -i $1 -j ACCEPT
   rule -A FORWARD -o $1 -j ACCEPT;
-};
-
-function set_sys {
-  doas sysctl ${1}="${2}"
 };
 
 function configure_system {

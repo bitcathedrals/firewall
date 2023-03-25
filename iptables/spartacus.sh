@@ -4,7 +4,12 @@
 #
 
 WIFI=wlp166s0
-WIRED=enx0826ae33d126
+ETHERNET=enx0826ae33d126
+
+WIRELESS="192.168.10.0/24"
+WIRED="192.168.24.0/24"
+
+SSH="ssh,6666"
 
 icmp_core $WIFI
 
@@ -12,20 +17,19 @@ icmp_block_broadcast $WIFI
 icmp_block_strange $WIFI
 icmp_ping_throttle $WIFI
 
-icmp_core $WIRED
+icmp_core $ETHERNET
 
-icmp_block_broadcast $WIRED
-icmp_block_strange $WIRED
-icmp_ping_throttle $WIRED
+icmp_block_broadcast $ETHERNET
+icmp_block_strange $ETHERNET
+icmp_ping_throttle $ETHERNET
 
 tcp_core $WIFI
 tcp_drop_broadcast $WIFI
 tcp_any_out $WIFI
 
-
-tcp_core $WIRED
-tcp_drop_broadcast $WIRED
-tcp_any_out $WIRED
+tcp_core $ETHERNET
+tcp_drop_broadcast $ETHERNET
+tcp_any_out $ETHERNET
 
 udp_core $WIFI
 udp_drop_broadcast $WIFI
@@ -33,11 +37,12 @@ udp_any_out $WIFI
 
 open_dhcp $WIFI
 
-udp_core $WIRED
-udp_drop_broadcast $WIRED
-udp_any_out $WIRED
+udp_core $ETHERNET
+udp_drop_broadcast $ETHERNET
+udp_any_out $ETHERNET
 
-
+open_tcp_server $WIRELESS $SSH 10
+open_tcp_server $WIRED $SSH 10
 
 
 
