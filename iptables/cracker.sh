@@ -3,7 +3,7 @@
 # Generic Firewall config for simple client host
 #
 
-WIFI=wlp166s0
+WIFI=wlp4s0
 ETHERNET=enx0826ae3af2e5
 
 WIRELESS="192.168.10.0/24"
