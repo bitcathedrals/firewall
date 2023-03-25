@@ -1,10 +1,7 @@
 #! /usr/bin/env bash
 
-source $HOME/code/firewall/pf/openbsd.sh
-
 wifi="iwx0"
 ethernet="ure0"
-vpn="tun0"
 
 wireless="192.168.10.0/24"
 wireless_myip=`host_lookup spartan.local`
@@ -16,11 +13,9 @@ echo "spartan wireless broadcast = $wireless_broadcast" >/dev/stderr
 
 wired="192.168.24.0/24"
 wired_myip=`host_lookup spartan.wired`
-wired_broadcast=`broadcast_lookup $wired_myip`
 
 echo "spartan wired net = $wired" >/dev/stderr
 echo "spartan wired ip = $wired_myip" >/dev/stderr
-echo "spartan wired broadcast = $wired_broadcast" >/dev/stderr
 
 #
 # get ips for gatekeeper
@@ -74,21 +69,8 @@ NFS_TCP=`rpc_port $gatekeeper_wired nfs tcp`
 
 rpc_print
 
-out_to $wired_myip udp $PORTMAP_UDP $gatekeeper_wired
-out_to $wired_myip tcp $PORTMAP_TCP $gatekeeper_wired
-
-out_to $wired_myip udp $STATUS_UDP $gatekeeper_wired
-out_to $wired_myip tcp $STATUS_TCP $gatekeeper_wired
-
-out_to $wired_myip udp $LOCK_UDP $gatekeeper_wired
-out_to $wired_myip tcp $LOCK_TCP $gatekeeper_wired
-
-out_to $wired_myip udp $MOUNT_UDP $gatekeeper_wired
-out_to $wired_myip tcp $MOUNT_TCP $gatekeeper_wired
-
-out_to $wired_myip udp $NFS_UDP $gatekeeper_wired
-out_to $wired_myip tcp $NFS_TCP $gatekeeper_wired
-
+out_to $wired_myip udp "{ $PORTMAP_UDP , $STATUS_UDP , $LOCK_UDP , $MOUNT_UDP , $NFS_UDP }" $gatekeeper_wired
+out_to $wired_myip tcp "{ $PORTMAP_TCP , $STATUS_TCP , $LOCK_TCP , $MOUNT_TCP , $NFS_TCP }" $gatekeeper_wired
 
 # backup
 
@@ -114,10 +96,7 @@ outbound $wireless_myip tcp "$MAIL"
 
 outbound $wireless_myip tcp "{ 194 , $IRC }"
 
-
 # block ssh, telnet, ftp, rpc, smb
-block_stealth $wireless_myip tcp 21
-block_stealth $wireless_myip tcp 22
-block_stealth $wireless_myip tcp 23
+block_stealth $wireless_myip tcp "{ 21 , 22 , 23 }"
 block_stealth $wireless_myip "{ tcp , udp }" 111
 block_stealth $wireless_myip "{ tcp , udp }" "{ 137 , 138 , 139 }"

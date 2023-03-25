@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+HOSTNAME=`hostname | cut -d . -f 1`
+
 # default maximum number of connections for a service
 DEFAULT_CON_MAX=100
 DEFAULT_RATE_MAX="15/30"
@@ -44,7 +46,7 @@ function broadcast_lookup {
 # set default policy for default block, loopback, and icmp out
 
 function default_policy {
-  cat <<DEFAULT_POLICY
+  cat >>${HOSTNAME}.pf <<DEFAULT_POLICY
 block drop all
 
 table <blacklist> persist
@@ -55,10 +57,9 @@ pass out on $LO
 
 antispoof for $LO
 
-pass out proto icmp to any keep state
+pass out proto icmp keep state
 DEFAULT_POLICY
 };
-
 
 #
 # rpc ports
@@ -73,7 +74,7 @@ function rpc_port {
 }
 
 function rpc_print {
-  cat >/dev/stderr <<PORTLIST
+  cat >>${HOSTNAME}.pf >/dev/stderr <<PORTLIST
 rpc ports:
 
 portmap udp = $PORTMAP_UDP tcp = $PORTMAP_TCP
@@ -93,7 +94,7 @@ PORTLIST
 # $1 = address
 
 function in_icmp {
-  cat <<ICMP
+  cat >>${HOSTNAME}.pf <<ICMP
 pass in proto icmp to $1 keep state
 ICMP
 };
@@ -107,7 +108,7 @@ ICMP
 # $3 = port
 
 function inbound {
-  cat <<SERVER
+  cat >>${HOSTNAME}.pf <<SERVER
 pass in proto $2 from any to $1 port $3 keep state
 SERVER
 };
@@ -136,7 +137,7 @@ function in_from {
     MAX=$DEFAULT_CON_MAX
   fi
 
-  cat <<THROTTLE
+  cat >>${HOSTNAME}.pf <<THROTTLE
 pass in proto $2 from $4 to $1 port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
 THROTTLE
 };
@@ -153,7 +154,7 @@ THROTTLE
 # $3 = target port
 
 function outbound {
-  cat <<CLIENT
+  cat >>${HOSTNAME}.pf <<CLIENT
 pass out proto $2 from $1 to any port $3 keep state
 CLIENT
 };
@@ -168,7 +169,7 @@ CLIENT
 # $4 = dest host
 
 function out_to {
-  cat <<CLIENT
+  cat >>${HOSTNAME}.pf <<CLIENT
 pass out proto $2 from $1 to $4 port $3 keep state
 CLIENT
 };
@@ -182,7 +183,7 @@ CLIENT
 # $1 = interface
 
 function open_dhcp {
-  cat <<DHCP
+  cat >>${HOSTNAME}.pf <<DHCP
 pass out on $1 proto udp from any to any port { 67, 68 }
 pass in on $1 proto udp from any to any port { 67, 68 }
 DHCP
@@ -234,8 +235,7 @@ function block_stealth {
     RATE=$DEFAULT_RATE_MAX
   fi
 
-  cat <<STEALTH
-
+  cat >>${HOSTNAME}.pf <<STEALTH
 block return-icmp in log (all, to pflog0) proto $2 from any to $1 port $3 max-pkt-rate $RATE
 block drop in proto $2 from any to $1 port $3
 STEALTH
@@ -243,20 +243,19 @@ STEALTH
 
 case $1 in
   "test")
-    hostname=`hostname | cut -d . -f 1`
-    echo "testing firewall for: $hostname"
-    ./${hostname}.sh >${hostname}.pf
-
-    pfctl -n -f ${hostname}.pf
+    test -f ${HOSTNAME}.pf && rm ${HOSTNAME}.pf
+    source ${HOSTNAME}.sh
+    pfctl -n -f ${HOSTNAME}.pf
   ;;
   "update")
-    hostname=`hostname | cut -d . -f 1`
-    echo "updating firewall for: $hostname"
-    ./${hostname}.sh >${hostname}.pf
-    doas cp ${hostname}.pf /etc/pf.conf
+    test -f ${HOSTNAME}.pf && rm ${HOSTNAME}.pf
+    source ${HOSTNAME}.sh
+    doas cp ${HOSTNAME}.pf /etc/pf.conf
   ;;
   "flush")
     doas pfctl -F rules
+  ;;
+  "forget")
     doas pfctl -F states
   ;;
   "load")
@@ -283,7 +282,7 @@ case $1 in
   "interface")
     doas pfctl -P -N -i $1 -s all
   ;;
-  "help")
+  "help"|*)
     cat <<HELP
 openbsd.sh firewall
 
@@ -292,7 +291,8 @@ help   = command reference
 update    = generate a new firewall
 test      = test firewall
 
-flush     = flush rules and state
+flush     = flush rules
+forget    = flush states
 
 load      = load the firewall
 disable   = disable the firewall
