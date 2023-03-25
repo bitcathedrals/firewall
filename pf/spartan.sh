@@ -1,18 +1,26 @@
 #! /usr/bin/env bash
 
-pf_firewall=$HOME/code/firewall/pf/openbsd.sh
+source $HOME/code/firewall/pf/openbsd.sh
 
 wifi="iwx0"
 ethernet="ure0"
 vpn="tun0"
 
 wireless="192.168.10.0/24"
-wireless_myip="192.168.10.138"
+wireless_myip=`host_lookup spartan.local`
+wireless_broadcast=`broadcast_lookup $wireless_myip`
+
+echo "spartan wireless net = $wireless" >/dev/stderr
+echo "spartan wireless ip = $wireless_myip" >/dev/stderr
+echo "spartan wireless broadcast = $wireless_broadcast" >/dev/stderr
 
 wired="192.168.24.0/24"
-wired_myip="192.168.24.5"
+wired_myip=`host_lookup spartan.wired`
+wired_broadcast=`broadcast_lookup $wired_myip`
 
-source $pf_firewall
+echo "spartan wired net = $wired" >/dev/stderr
+echo "spartan wired ip = $wired_myip" >/dev/stderr
+echo "spartan wired broadcast = $wired_broadcast" >/dev/stderr
 
 #
 # get ips for gatekeeper
@@ -21,8 +29,10 @@ source $pf_firewall
 gatekeeper_wireless=`host_lookup gatekeeper.local`
 gatekeeper_wired=`host_lookup gatekeeper.wired`
 
-echo "gatekeeper wireless = $gatekeeper_wireless" >/dev/stderr
-echo "gatekeeper wired = $gatekeeper_wired" >/dev/stderr
+echo "gatekeeper wireless ip = $gatekeeper_wireless" >/dev/stderr
+echo "gatekeeper wired ip = $gatekeeper_wired" >/dev/stderr
+
+hades_wired=`host_lookup hades.wired`
 
 #
 # basics policy
@@ -38,8 +48,8 @@ open_router $wifi
 # trusted services
 #
 
-open_trusted $wifi
-open_trusted $ethernet
+open_trusted $wireless_myip
+open_trusted $wired_myip
 
 #
 # CLIENTS
@@ -62,29 +72,31 @@ MOUNT_TCP=`rpc_port $gatekeeper_wired mountd tcp`
 NFS_UDP=`rpc_port $gatekeeper_wired nfs udp`
 NFS_TCP=`rpc_port $gatekeeper_wired nfs tcp`
 
-open_to $gatekeeper_wired udp $PORTMAP_UDP
-open_to $gatekeeper_wired tcp $PORTMAP_TCP
+rpc_print
 
-open_to $gatekeeper_wired udp $STATUS_UDP
-open_to $gatekeeper_wired tcp $STATUS_TCP
+out_to $wired_myip udp $PORTMAP_UDP $gatekeeper_wired
+out_to $wired_myip tcp $PORTMAP_TCP $gatekeeper_wired
 
-open_to $gatekeeper_wired udp $LOCK_UDP
-open_to $gatekeeper_wired tcp $LOCK_TCP
+out_to $wired_myip udp $STATUS_UDP $gatekeeper_wired
+out_to $wired_myip tcp $STATUS_TCP $gatekeeper_wired
 
-open_to $gatekeeper_wired udp $MOUNT_UDP
-open_to $gatekeeper_wired tcp $MOUNT_TCP
+out_to $wired_myip udp $LOCK_UDP $gatekeeper_wired
+out_to $wired_myip tcp $LOCK_TCP $gatekeeper_wired
 
-open_to $gatekeeper_wired udp $NFS_UDP
-open_to $gatekeeper_wired tcp $NFS_TCP
+out_to $wired_myip udp $MOUNT_UDP $gatekeeper_wired
+out_to $wired_myip tcp $MOUNT_TCP $gatekeeper_wired
+
+out_to $wired_myip udp $NFS_UDP $gatekeeper_wired
+out_to $wired_myip tcp $NFS_TCP $gatekeeper_wired
 
 
 # backup
 
-open_to $gatekeeper_wired tcp $RSYNC
+out_to $wired_myip tcp $RSYNC $gatekeeper_wired
 
 # RDP
 
-open_out $ethernet tcp $RDP
+out_to $wired_myip tcp $RDP $hades_wired
 
 #
 # SERVERS
@@ -92,54 +104,20 @@ open_out $ethernet tcp $RDP
 
 # ssh server
 
-open_from tcp "$SSH" $wireless_myip $wireless "5/10" 10
-open_from tcp "$SSH" $wired_myip $wired "5/10" 10
-
-# VPN
-
-open_out $wifi udp openvpn
+in_from $wireless_myip tcp "$SSH" $wireless "5/10" 10
+in_from $wired_myip tcp "$SSH" $wired "5/10" 10
 
 # web,email,IRC on Wi-Fi
 
-open_out $wifi tcp "$WEB"
-open_out $wifi tcp "$MAIL"
+outbound $wireless_myip tcp "$WEB"
+outbound $wireless_myip tcp "$MAIL"
 
-open_out $wifi tcp "{ 194 , $IRC }"
+outbound $wireless_myip tcp "{ 194 , $IRC }"
 
 
 # block ssh, telnet, ftp, rpc, smb
-block_stealth $wifi tcp 21
-block_stealth $wifi tcp 22
-block_stealth $wifi tcp 23
-block_stealth $wifi "{ tcp , udp }" 111
-block_stealth $wifi "{ tcp , udp }" "{ 137 , 138 , 139 }"
-
-#
-# VPN (general)
-#
-
-# low level
-
-open_dhcp $vpn
-
-# basic services
-
-open_out $vpn "{ udp , tcp }" domain
-
-# security
-
-open_out $vpn tcp "$SSH"
-
-# web and email and ftp
-
-open_out $vpn tcp "$WEB"
-open_out $vpn tcp "$MAIL"
-
-open_out $vpn tcp "$FTP"
-
-# irc
-
-open_out $vpn tcp "{ 194 , $IRC }"
-
-
-
+block_stealth $wireless_myip tcp 21
+block_stealth $wireless_myip tcp 22
+block_stealth $wireless_myip tcp 23
+block_stealth $wireless_myip "{ tcp , udp }" 111
+block_stealth $wireless_myip "{ tcp , udp }" "{ 137 , 138 , 139 }"

@@ -31,6 +31,11 @@ function host_lookup {
   nslookup $1 | grep -i address | cut -d ' ' -f 2 | grep -v -i 'address' | tail -n 1;
 }
 
+# $1 = address
+
+function broadcast_lookup {
+  ifconfig | grep inet | grep $1 | tr -s ' ' | cut -d ' ' -f 6
+}
 
 #
 # default_policy
@@ -80,16 +85,16 @@ PORTLIST
 }
 
 #
-# open_icmp
+# in_icmp
 #
 
 # open icmp inbound on interface
 
-# $1 = interface
+# $1 = address
 
-function open_icmp {
+function in_icmp {
   cat <<ICMP
-pass in on $1 proto icmp keep state
+pass in proto icmp to $1 keep state
 ICMP
 };
 
@@ -109,20 +114,63 @@ pass in on $1 proto udp from any to any port { 67, 68 }
 DHCP
 };
 
-
 #
-# open_out
+# inbound
 #
 
-# open outbound access
-
-# $1 = interface
+# $1 = address
 # $2 = proto
+# $3 = port
+
+function inbound {
+  cat <<SERVER
+pass in proto $2 from any to $1 port $3 keep state
+SERVER
+};
+
+#
+# in_from
+#
+
+# $1 = my ip
+# $2 = protocol
+# $3 = port
+# $4 = address
+# $5 = rate limit
+# $6 = max connections
+
+function in_from {
+  RATE=$5
+  if test -z "$RATE"
+  then
+    RATE=$DEFAULT_RATE_MAX
+  fi
+
+  MAX=$6
+  if test -z "$MAX"
+  then
+    MAX=$DEFAULT_CON_MAX
+  fi
+
+  cat <<THROTTLE
+pass in proto $2 from $4 to $1 port $3 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
+THROTTLE
+};
+
+
+#
+# outbound
+#
+
+# open outbound traffic
+
+# $1 = my address
+# $2 = protocol
 # $3 = target port
 
-function open_out {
+function outbound {
   cat <<CLIENT
-pass out on $1 proto $2 from any to any port $3 keep state
+pass out proto $2 from $1 to any port $3 keep state
 CLIENT
 };
 
@@ -130,85 +178,44 @@ CLIENT
 # open to a specific host
 #
 
-# $1 = host
-# $2 = proto
+# $1 = my address
+# $2 = protocol
 # $3 = port
+# $4 = dest host
 
-function open_to {
+function out_to {
   cat <<CLIENT
-pass out proto $2 from any to $1 port $3 keep state
+pass out proto $2 from $1 to $4 port $3 keep state
 CLIENT
 };
 
-
 #
-# open_in
-#
-
-# open server access from outside
-
-# $1 = interface
-# $2 = proto
-# $3 = port
-
-function open_in {
-  cat <<SERVER
-pass in on $1 proto $2 from any to any port $3 keep state
-SERVER
-};
-
-#
-# open_from
+# open_trusted - open trusted services
 #
 
-# $1 = proto
-# $2 = port
-# $3 = my ip
-# $4 = network
-# $5 = rate limit
-# $6 = max connections
-
-function open_from {
-  MAX=$6
-  if test -z "$MAX"
-  then
-    MAX=$DEFAULT_CON_MAX
-  fi
-
-  RATE=$5
-  if test -z "$RATE"
-  then
-    RATE=$DEFAULT_RATE_MAX
-  fi
-
-  cat <<THROTTLE
-pass in proto $1 from $4 to $3 port $2 keep state (max-src-conn $MAX , max-src-conn-rate $RATE , overload <blacklist> flush global)
-THROTTLE
-};
-
-#
-# open standard trusted services
-#
-
-# $1 interface
+# $1 my address
 
 function open_trusted {
-  open_icmp $1
-  open_out $1 "{ udp , tcp }" domain
+  in_icmp $1
+  outbound $1 "{ udp , tcp }" domain
 
-  open_out $1 tcp "$SSH"
+  outbound $1 tcp "$SSH"
 };
+
+#
+# open_router - assume internet connection
+#
 
 function open_router {
   open_dhcp $1
-  open_out $1 udp $NTP
+  outbound $1 udp $NTP
 };
 
 #
 # block_stealth - return unreachable
 #
 
-# $1 interface
+# $1 my address
 # $2 proto
 # $3 port
 # $4 rate | 10 packets / 30 seconds
@@ -223,8 +230,8 @@ function block_stealth {
 
   cat <<STEALTH
 
-block return-icmp in log (all, to pflog0) on $1 proto $2 from any to any port $3 max-pkt-rate $RATE
-block drop in on $1 proto $2 from any to any port $3
+block return-icmp in log (all, to pflog0) proto $2 from any to $1 port $3 max-pkt-rate $RATE
+block drop in proto $2 from any to $1 port $3
 STEALTH
 }
 
