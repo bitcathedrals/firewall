@@ -117,6 +117,8 @@ PORTLIST
 
 # set default policy for default block, loopback, and icmp out
 
+# block drop in inet proto icmp icmp-type {timereq,timerep,inforeq,inforep,maskreq,maskrep}
+
 function default_policy {
   cat >>${HOSTNAME}.pf <<DEFAULT_POLICY
 set syncookies adaptive
@@ -129,11 +131,10 @@ block quick from <blacklist>
 
 pass in on $LO
 pass out on $LO
-
 antispoof for $LO
 
 pass out inet proto icmp keep state
-block drop in inet proto icmp icmp-type {timereq,timerep,inforeq,inforep,maskreq,maskrep}
+pass in inet proto icmp icmp-type {squench,unreach,redir,althost,routeradv,routersol,timex,paramprob,dataconv,mobredir,mobregreq,mobregrep} keep state
 DEFAULT_POLICY
 };
 
@@ -148,7 +149,7 @@ DEFAULT_POLICY
 
 function risky_icmp {
   cat >>${HOSTNAME}.pf <<ICMP
-block drop in inet proto icmp to $2 icmp-type {echoreq,trace}
+block drop in inet proto icmp to $1 icmp-type {redir,althost}
 ICMP
 }
 
@@ -280,7 +281,7 @@ DHCP
 # $2 broadcast address
 
 function open_risky {
-  risky_icmp $1 $2
+  risky_icmp $1
   outbound $1 tcp "$SSH"
 }
 
@@ -292,7 +293,7 @@ function open_risky {
 # $2 broadcast address
 
 function open_trusted {
-  trusted_icmp $1 $2
+  trusted_icmp $1
   outbound $1 tcp "$SSH"
 };
 
@@ -353,6 +354,9 @@ case $1 in
   ;;
   "forget")
     doas pfctl -F states
+  ;;
+  "dev")
+    doas pfctl -f ${HOSTNAME}.pf
   ;;
   "load")
     doas pfctl -f /etc/pf.conf
