@@ -6,8 +6,8 @@
 
 HOST=`uname -a  | tr -s ' ' | cut -d ' ' -f 2`
 
-SYS_CONFIG=/etc/firewall/$HOST.sh
-CUR_CONFIG=$HOST.sh
+SYS_CONFIG=/etc/firewall/${HOST}.sh
+CUR_CONFIG=${HOST}.sh
 
 echo "iptables.sh: executing for host: $HOST"
 
@@ -420,6 +420,10 @@ case $1 in
   ;;
   "rules")
     doas iptables -v --list
+  ;;
+  "update")
+    doas cp $CUR_CONFIG $SYS_CONFIG
+    doas cp iptables.sh /etc/firewall/iptables.sh
   ;;
   "install")
     test -d /etc/firewall || doas mkdir -p /etc/firewall
