@@ -38,7 +38,6 @@ function close_policy {
 };
 
 function icmp_core {
-
   #
   # pass connection related
   #
@@ -47,8 +46,36 @@ function icmp_core {
   rule -A icmp_traffic_out -p icmp -m state --state RELATED  -j ACCEPT;
 }
 
-function icmp_trusted {
+function icmp_block_broadcast {
+  #
+  # drop all broadcast traffic
+  #
 
+  rule  -A icmp_filter_in -p icmp -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
+  rule  -A icmp_filter_in -p icmp -m pkttype --pkt-type broadcast -j DROP
+};
+
+function icmp_block_strange {
+  #
+  # log odd ICMP
+  #
+
+  rule -A icmp_filter_in -p icmp --icmp-type timestamp-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp --icmp-type timestamp-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp --icmp-type address-mask-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+  rule -A icmp_filter_in -p icmp --icmp-type address-mask-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
+
+  #
+  # drop odd ICMP
+  #
+
+  rule -A icmp_filter_in  -p icmp --icmp-type timestamp-request -j DROP
+  rule -A icmp_filter_in  -p icmp --icmp-type timestamp-reply -j DROP
+  rule -A icmp_filter_in  -p icmp --icmp-type address-mask-request -j DROP
+  rule -A icmp_filter_out -p icmp --icmp-type address-mask-reply -j DROP;
+};
+
+function icmp_trusted {
   #
   # allow outbound ping
   #
@@ -57,42 +84,12 @@ function icmp_trusted {
   rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -j ACCEPT;
 };
 
-
-function icmp_block_broadcast {
-  #
-  # drop all broadcast traffic
-  #
-
-  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
-  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -j DROP
-};
-
-function icmp_block_strange {
-  #
-  # log odd ICMP
-  #
-
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type timestamp-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type timestamp-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type address-mask-request -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type address-mask-reply -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix="\"firewall: ICMP strange\""
-
-  #
-  # drop odd ICMP
-  #
-
-  rule -A icmp_filter_in  -p icmp -d $1 --icmp-type timestamp-request -j DROP
-  rule -A icmp_filter_in  -p icmp -d $1 --icmp-type timestamp-reply -j DROP
-  rule -A icmp_filter_in  -p icmp -d $1 --icmp-type address-mask-request -j DROP
-  rule -A icmp_filter_out -p icmp -d $1 --icmp-type address-mask-reply -j DROP;
-};
-
 function icmp_ping_throttle {
   rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-request -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
-  rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
+  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
 
   rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-request -j DROP
-  rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-request -j DROP;
+  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -j DROP;
 };
 
 function icmp_ping_block {

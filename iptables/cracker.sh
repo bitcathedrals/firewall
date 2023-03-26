@@ -15,43 +15,33 @@ wiredIP="192.168.24.4"
 
 SSH="ssh,6666"
 
-#
 # universal
-#
 
 icmp_core
+icmp_block_strange
+icmp_block_broadcast
+
 tcp_core
 udp_core
 
-#
 # Wi-Fi
-#
 
-icmp_trusted $wirelessIP
-
-icmp_block_broadcast $wifi
-icmp_block_strange $wirelessIP
 icmp_ping_throttle $wirelessIP
+icmp_trusted $wirelessIP
 
 tcp_drop_broadcast $wifi
 tcp_any_out $wirelessIP
 
-udp_drop_broadcast $wifi
 udp_any_out $wirelessIP
 
 open_dhcp $wifi
 
 open_tcp_server $wirelessNet $SSH 10
 
-#
 # Ethernet
-#
 
-icmp_trusted $wiredIP
-
-icmp_block_broadcast $ethernet
-icmp_block_strange $wiredIP
 icmp_ping_throttle $wiredIP
+icmp_trusted $wiredIP
 
 tcp_drop_broadcast $ethernet
 tcp_any_out $wiredIP
@@ -60,8 +50,3 @@ udp_drop_broadcast $ethernet
 udp_any_out $wiredIP
 
 open_tcp_server $wiredNet $SSH 10
-
-
-
-
-
