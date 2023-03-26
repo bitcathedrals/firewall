@@ -117,8 +117,6 @@ PORTLIST
 
 # set default policy for default block, loopback, and icmp out
 
-# block drop in inet proto icmp icmp-type {timereq,timerep,inforeq,inforep,maskreq,maskrep}
-
 function default_policy {
   cat >>${HOSTNAME}.pf <<DEFAULT_POLICY
 set syncookies adaptive
@@ -134,9 +132,11 @@ pass out on $LO
 antispoof for $LO
 
 pass out inet proto icmp keep state
-pass in inet proto icmp icmp-type {squench,unreach,redir,althost,routeradv,routersol,timex,paramprob,dataconv,mobredir,mobregreq,mobregrep} keep state
+pass in inet proto icmp icmp-type {unreach,althost,routeradv,routersol,timex,paramprob,dataconv,mobredir,mobregreq,mobregrep} keep state
 DEFAULT_POLICY
 };
+
+# pass in inet proto icmp icmp-type {squench}
 
 #
 # risky_icmp
