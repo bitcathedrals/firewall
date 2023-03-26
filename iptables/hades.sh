@@ -10,7 +10,7 @@ VPN=tun0
 wirelessNet="192.168.10.0/24"
 wiredNet="192.168.24.0/24"
 
-wirelessIP="1921.68.10.169"
+wirelessIP="192.68.10.169"
 wiredIP="192.168.24.7"
 
 SSH="ssh,6666"
