@@ -203,7 +203,14 @@ function stealth_tcp_block {
 }
 
 function set_sys {
-  doas sysctl ${1}="${2}"
+  if [[ `whoami` == 'root' ]]
+  then
+    PRIV=''
+  else
+    PRIV='doas'
+  fi
+
+  eval "$PRIV sysctl ${1}=\"${2}\""
 };
 
 function nat {
