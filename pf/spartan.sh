@@ -25,8 +25,8 @@ default_policy
 # WiFi/router
 #
 
+open_risky \$wirelessIP \$wirelessBrd
 open_router \$wirelessIP \$intWifi
-open_trusted \$wirelessIP
 
 # clients
 
@@ -43,7 +43,8 @@ in_from \$wirelessIP tcp "$SSH" \$wirelessNet "5/10" 10
 # Wired
 #
 
-open_trusted \$wiredIP
+open_trusted \$wiredIP \$wiredBrd
+outbound \$wiredIP "{ udp , tcp }" domain
 
 # clients
 

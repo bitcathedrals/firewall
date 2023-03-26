@@ -119,7 +119,8 @@ PORTLIST
 
 function default_policy {
   cat >>${HOSTNAME}.pf <<DEFAULT_POLICY
-match in all scrub (no-df)
+set syncookies adaptive
+match in all scrub (no-df,random-id)
 
 block drop all
 
@@ -131,21 +132,39 @@ pass out on $LO
 
 antispoof for $LO
 
-pass out proto icmp keep state
+pass out inet proto icmp keep state
+block drop in inet proto icmp icmp-type {timereq,timerep,inforeq,inforep,maskreq,maskrep}
 DEFAULT_POLICY
 };
 
 #
-# in_icmp
+# risky_icmp
 #
 
-# open icmp inbound on interface
+# open icmp inbound on a risky interface
 
 # $1 = address
+# $2 = broadcast address
 
-function in_icmp {
+function risky_icmp {
   cat >>${HOSTNAME}.pf <<ICMP
-pass in proto icmp to $1 keep state
+block drop in inet proto icmp to $2 icmp-type {echoreq,trace}
+ICMP
+}
+
+
+#
+# trusted_icmp
+#
+
+# open icmp inbound on a safe interface
+
+# $1 = address
+# $2 = broadcast address
+
+function trusted_icmp {
+  cat >>${HOSTNAME}.pf <<ICMP
+pass in inet proto icmp to $1 icmp-type {echoreq,trace} keep state
 ICMP
 };
 
@@ -204,8 +223,15 @@ THROTTLE
 # $3 = target port
 
 function outbound {
+  if [[ $2 == "tcp" ]]
+  then
+    STATE="modulate"
+  else
+    STATE="keep"
+  fi
+
   cat >>${HOSTNAME}.pf <<CLIENT
-pass out proto $2 from $1 to any port $3 keep state
+pass out proto $2 from $1 to any port $3 $STATE state
 CLIENT
 };
 
@@ -219,8 +245,15 @@ CLIENT
 # $4 = dest host
 
 function out_to {
+  if [[ $2 == "tcp" ]]
+  then
+    STATE="modulate"
+  else
+    STATE="keep"
+  fi
+
   cat >>${HOSTNAME}.pf <<CLIENT
-pass out proto $2 from $1 to $4 port $3 keep state
+pass out proto $2 from $1 to $4 port $3 $STATE state
 CLIENT
 };
 
@@ -240,15 +273,26 @@ DHCP
 };
 
 #
-# open_trusted - open trusted services
+# open basic protocols on a risky interface
 #
 
 # $1 my address
+# $2 broadcast address
+
+function open_risky {
+  risky_icmp $1 $2
+  outbound $1 tcp "$SSH"
+}
+
+#
+# open_trusted - open basic protocols on a trusted interface
+#
+
+# $1 my address
+# $2 broadcast address
 
 function open_trusted {
-  in_icmp $1
-  outbound $1 "{ udp , tcp }" domain
-
+  trusted_icmp $1 $2
   outbound $1 tcp "$SSH"
 };
 
@@ -266,6 +310,8 @@ function open_router {
   then
     open_dhcp $2
   fi;
+
+  outbound $1 "{ udp , tcp }" domain
 };
 
 #
