@@ -38,12 +38,16 @@ function close_policy {
 };
 
 function icmp_core {
+
   #
   # pass connection related
   #
 
-  rule -A icmp_traffic_in  -p icmp -d $1 -m state --state RELATED  -j ACCEPT
-  rule -A icmp_traffic_out -p icmp -s $1 -m state --state RELATED  -j ACCEPT;
+  rule -A icmp_traffic_in  -p icmp -m state --state RELATED  -j ACCEPT
+  rule -A icmp_traffic_out -p icmp -m state --state RELATED  -j ACCEPT;
+}
+
+function icmp_trusted {
 
   #
   # allow outbound ping

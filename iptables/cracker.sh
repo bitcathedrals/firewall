@@ -19,6 +19,7 @@ SSH="ssh,6666"
 # universal
 #
 
+icmp_core
 tcp_core
 udp_core
 
@@ -26,7 +27,7 @@ udp_core
 # Wi-Fi
 #
 
-icmp_core $wirelessIP
+icmp_trusted $wirelessIP
 
 icmp_block_broadcast $wifi
 icmp_block_strange $wirelessIP
@@ -46,7 +47,7 @@ open_tcp_server $wirelessNet $SSH 10
 # Ethernet
 #
 
-icmp_core $wiredIP
+icmp_trusted $wiredIP
 
 icmp_block_broadcast $ethernet
 icmp_block_strange $wiredIP
