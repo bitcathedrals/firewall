@@ -4,11 +4,11 @@
 # cracker configuration
 #
 
-WIFI=wlp4s0
-ETHERNET=enx0826ae3af2e5
+wifi=wlp4s0
+ethernet=enx0826ae3af2e5
 
-WIRELESS="192.168.10.0/24"
-WIRED="192.168.24.0/24"
+wirelessNet="192.168.10.0/24"
+wiredNet="192.168.24.0/24"
 
 wirelessIP="192.168.10.141"
 wiredIP="192.168.24.4"
@@ -28,19 +28,19 @@ udp_core
 
 icmp_core $wirelessIP
 
-icmp_block_broadcast $WIFI
+icmp_block_broadcast $wifi
 icmp_block_strange $wirelessIP
 icmp_ping_throttle $wirelessIP
 
-tcp_drop_broadcast $WIFI
+tcp_drop_broadcast $wifi
 tcp_any_out $wirelessIP
 
-udp_drop_broadcast $WIFI
+udp_drop_broadcast $wifi
 udp_any_out $wirelessIP
 
-open_dhcp $WIFI
+open_dhcp $wifi
 
-open_tcp_server $wirelessIP $SSH 10
+open_tcp_server $wirelessNet $SSH 10
 
 #
 # Ethernet
@@ -48,17 +48,17 @@ open_tcp_server $wirelessIP $SSH 10
 
 icmp_core $wiredIP
 
-icmp_block_broadcast $ETHERNET
+icmp_block_broadcast $ethernet
 icmp_block_strange $wiredIP
 icmp_ping_throttle $wiredIP
 
-tcp_drop_broadcast $ETHERNET
+tcp_drop_broadcast $ethernet
 tcp_any_out $wiredIP
 
-udp_drop_broadcast $ETHERNET
+udp_drop_broadcast $ethernet
 udp_any_out $wiredIP
 
-open_tcp_server $wiredIP $SSH 10
+open_tcp_server $wiredNet $SSH 10
 
 
 
