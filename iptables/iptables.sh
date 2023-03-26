@@ -59,8 +59,8 @@ function icmp_block_broadcast {
   # drop all broadcast traffic
   #
 
-  rule  -A icmp_filter_in -p icmp -d $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
-  rule  -A icmp_filter_in -p icmp -d $1 -m pkttype --pkt-type broadcast -j DROP
+  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2  --nflog-prefix "\"firewall: ICMP broadcast!\""
+  rule  -A icmp_filter_in -p icmp -i $1 -m pkttype --pkt-type broadcast -j DROP
 };
 
 function icmp_block_strange {
@@ -101,23 +101,23 @@ function tcp_core {
   # tcp connection state
   #
 
-  rule -A tcp_con_in -p tcp -d $1 -m state --state ESTABLISHED -j ACCEPT
-  rule -A tcp_con_out -p tcp -s $1 -m state --state ESTABLISHED -j ACCEPT
+  rule -A tcp_con_in -p tcp -m state --state ESTABLISHED -j ACCEPT
+  rule -A tcp_con_out -p tcp -m state --state ESTABLISHED -j ACCEPT
 
-  rule -A tcp_con_in -p tcp -d $1  -m state --state RELATED -j ACCEPT
-  rule -A tcp_con_out -p tcp -s $1 -m state --state RELATED -j ACCEPT
+  rule -A tcp_con_in -p tcp -m state --state RELATED -j ACCEPT
+  rule -A tcp_con_out -p tcp -m state --state RELATED -j ACCEPT
 
-  rule -A tcp_con_in -p tcp -d $1 -m conntrack --ctstatus SEEN_REPLY --tcp-flags SYN,ACK,FIN,RST ACK,SYN -j ACCEPT
+  rule -A tcp_con_in -p tcp -m conntrack --ctstatus SEEN_REPLY --tcp-flags SYN,ACK,FIN,RST ACK,SYN -j ACCEPT
 
-  rule -A tcp_con_in -p tcp -d $1 --tcp-flags RST RST -j ACCEPT
-  rule -A tcp_con_out -p tcp -s $1 --tcp-flags RST RST -j ACCEPT
+#  rule -A tcp_con_in -p tcp -d $1 --tcp-flags RST RST -j ACCEPT
+#  rule -A tcp_con_out -p tcp -s $1 --tcp-flags RST RST -j ACCEPT
 
-  rule -A tcp_con_in -p tcp -d $1 --tcp-flags ACK ACK -j ACCEPT
-  rule -A tcp_con_out -p tcp -s $1 --tcp-flags ACK ACK -j ACCEPT;
+#  rule -A tcp_con_in -p tcp -d $1 --tcp-flags ACK ACK -j ACCEPT
+#  rule -A tcp_con_out -p tcp -s $1 --tcp-flags ACK ACK -j ACCEPT;
 };
 
 function tcp_any_out {
-  rule -A tcp_con_out -p tcp -o $1 -m state --state NEW -j ACCEPT;
+  rule -A tcp_con_out -p tcp -s $1 -m state --state NEW -j ACCEPT;
 };
 
 function tcp_drop_broadcast {
@@ -125,8 +125,8 @@ function tcp_drop_broadcast {
   # disable tcp broadcast.
   #
 
-  rule -A tcp_filter_in -p tcp -d $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP broadcast drop\""
-  rule -A tcp_filter_in -p tcp -d $1 -m pkttype --pkt-type broadcast -j DROP;
+  rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP broadcast drop\""
+  rule -A tcp_filter_in -p tcp -i $1 -m pkttype --pkt-type broadcast -j DROP;
 };
 
 function udp_core {
@@ -135,8 +135,8 @@ function udp_core {
 };
 
 function udp_drop_broadcast {
-  rule -A udp_filter_in -p udp -d $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP broadcast drop\""
-  rule -A udp_filter_in -p udp -d $1 -m pkttype --pkt-type broadcast -j DROP;
+  rule -A udp_filter_in -p udp -i $1 -m pkttype --pkt-type broadcast -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP broadcast drop\""
+  rule -A udp_filter_in -p udp -i $1 -m pkttype --pkt-type broadcast -j DROP;
 };
 
 function udp_any_out {
@@ -144,8 +144,8 @@ function udp_any_out {
 };
 
 function open_dhcp {
-  rule -A udp_con_out -p udp -s $1 --dport 67 -j ACCEPT
-  rule -A udp_con_in -p udp -d $1  --sport 67 -m pkttype --pkt-type broadcast -j ACCEPT;
+  rule -A udp_con_out -p udp -o $1 --dport 67 -j ACCEPT
+  rule -A udp_con_in -p udp -i $1  --sport 67 -m pkttype --pkt-type broadcast -j ACCEPT;
 };
 
 function open_udp_out {
