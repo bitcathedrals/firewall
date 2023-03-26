@@ -388,18 +388,21 @@ openbsd.sh firewall
 
 help   = command reference
 
-update    = generate a new firewall
 test      = test firewall
+update    = generate a new firewall
 
 flush     = flush rules
 forget    = flush states
 
-load      = load the firewall
+dev       = load development rules
+load      = load system rules
+
 disable   = disable the firewall
 enable    = enable the firewall
 
 rules     = show loaded rules
 stat      = show all rules and state
+
 blacklist = show blacklist table
 pardon    = flush the blacklist table
 interface = show all rules and state on INTERFACE
