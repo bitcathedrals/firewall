@@ -36,7 +36,7 @@ udp_any_out $wirelessIP
 
 open_dhcp $wifi
 
-open_tcp_server $wirelessNet $SSH 10
+open_tcp_server $wirelessIP $wirelessNet $SSH 10
 
 # Ethernet
 
@@ -49,4 +49,4 @@ tcp_any_out $wiredIP
 udp_drop_broadcast $ethernet
 udp_any_out $wiredIP
 
-open_tcp_server $wiredNet $SSH 10
+open_tcp_server $wiredIP $wiredNet $SSH 10

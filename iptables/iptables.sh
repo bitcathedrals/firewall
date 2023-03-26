@@ -157,26 +157,28 @@ function open_tcp_out {
   rule -A tcp_con_out -p tcp -s $1 --dport $2 -m state --state NEW -j ACCEPT;
 };
 
-# $1 = source address/network
-# $2 = port
-# $3 = maximum connections
+# $1 = host address
+# $2 = source address
+# $3 = port
+# $4 = maximum connections
 
 function open_udp_server {
-  rule -A udp_filter_in -p udp -d $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
-  rule -A udp_filter_in -p udp -d $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
+  rule -A udp_filter_in -p udp -d $1 --match multiport --dports $3 -m state --state NEW -m connlimit --connlimit-above $4 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
+  rule -A udp_filter_in -p udp -d $1 --match multiport --dports $3 -m state --state NEW -m connlimit --connlimit-above $4 -j DROP
 
-  rule -A udp_srv_in -p tcp -d $d --match multiport --dports $2 -m state --state NEW -j ACCEPT
+  rule -A udp_srv_in -p tcp -d $1 -s $2 --match multiport --dports $3 -m state --state NEW -j ACCEPT
 }
 
-# $1 = source address/network
-# $2 = port
-# $3 = maximum connection limit
+# $1 = host address
+# $2 = source address
+# $3 = port
+# $4 = maximum connection limit
 
 function open_tcp_server {
-  rule -A tcp_filter_in -p tcp -d $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
-  rule -A tcp_filter_in -p tcp -d $1 --match multiport --dports $2 -m state --state NEW -m connlimit --connlimit-above $3 -j DROP
+  rule -A tcp_filter_in -p tcp -d $1 --match multiport --dports $3 -m state --state NEW -m connlimit --connlimit-above $4 -j NFLOG --nflog-group 3 --nflog-prefix "\"firewall: $1:$2 connections  exceeded limit\""
+  rule -A tcp_filter_in -p tcp -d $1 --match multiport --dports $3 -m state --state NEW -m connlimit --connlimit-above $4 -j DROP
 
-  rule -A tcp_srv_in -p tcp -d $1 --match multiport --dports $2 -m state --state NEW -j ACCEPT
+  rule -A tcp_srv_in -p tcp -d $1 -s $2 --match multiport --dports $3 -m state --state NEW -j ACCEPT
 }
 
 # $1 = source address network
