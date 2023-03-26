@@ -25,7 +25,7 @@ open_router \$wirelessIP \$intWifi
 
 # WiFi
 
-open_trusted \$wirelessIP
+open_risky \$wirelessIP
 
 # clients
 
