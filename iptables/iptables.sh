@@ -287,12 +287,8 @@ case $1 in
     rule -A INPUT  -p tcp -j tcp_srv_in
     rule -A OUTPUT -p tcp -j tcp_srv_out
 
-    rule -A INPUT -p tcp -d $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule -A INPUT -p tcp -d $1 -j DROP
-
-    rule -A OUTPUT -p tcp -o $1 -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
-    rule -A OUTPUT -p tcp -o $1 -j DROP
-
+    rule -A INPUT -p tcp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
+    rule -A INPUT -p tcp -j DROP
     #
     # udp protocol
     #
@@ -317,9 +313,6 @@ case $1 in
 
     rule -A INPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
     rule -A INPUT -p udp -j DROP
-
-    rule -A OUTPUT -p udp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: UDP no matching rule\""
-    rule -A OUTPUT -p udp -j DROP
   ;;
   "delete")
     rule -X icmp_filter_in
