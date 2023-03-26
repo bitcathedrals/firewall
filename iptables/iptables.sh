@@ -17,7 +17,14 @@ function rule {
     echo "debug: $*"
   fi
 
-  eval "doas iptables $*"
+  if [[ `whoami` == 'root' ]]
+  then
+    PRIV=''
+  else
+    PRIV='doas'
+  fi
+
+  eval "$PRIV iptables $*"
 
   if [[ $? -ne 0 ]]
   then
