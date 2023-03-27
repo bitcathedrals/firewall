@@ -1,1 +1,2 @@
-pf/pf.conf
+pf/*.pf
+
