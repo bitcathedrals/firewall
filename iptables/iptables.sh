@@ -417,6 +417,7 @@ case $1 in
   ;;
   "start")
     $0 init
+    $0 core
     $0 load
     $0 close
   ;;
