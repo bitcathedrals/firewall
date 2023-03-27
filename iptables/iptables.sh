@@ -380,6 +380,14 @@ case $1 in
     rule -F udp_srv_out
     rule -Z udp_srv_out
   ;;
+  "wipe")
+    $0 flush
+    $0 open
+
+    rule -F INPUT
+    rule -F OUTPUT
+    rule -F FORWARSD
+  ;;
   "load")
     #
     # load the config
