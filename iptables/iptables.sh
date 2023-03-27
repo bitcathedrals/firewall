@@ -343,7 +343,7 @@ case $1 in
   "flush")
     rule -F INPUT
     rule -F OUTPUT
-    rule -F FORWARSD
+    rule -F FORWARD
 
     rule -t nat -F POSTROUTING
     rule -t nat -Z POSTROUTING
