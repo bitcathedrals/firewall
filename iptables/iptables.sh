@@ -257,6 +257,9 @@ case $1 in
     rule -N tcp_con_in
     rule -N tcp_con_out
 
+    rule -N tcp_srv_in
+    rule -N tcp_srv_out
+
     # udp
 
     rule -N udp_filter_in
@@ -296,9 +299,6 @@ case $1 in
 
     rule -A INPUT  -p tcp -j tcp_con_in
     rule -A OUTPUT -p tcp -j tcp_con_out
-
-    rule -N tcp_srv_in
-    rule -N tcp_srv_out
 
     rule -A INPUT  -p tcp -j tcp_srv_in
     rule -A OUTPUT -p tcp -j tcp_srv_out
