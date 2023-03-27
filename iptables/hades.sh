@@ -27,7 +27,6 @@ udp_core
 
 # Wi-Fi
 
-icmp_ping_throttle $wirelessIP
 icmp_trusted $wirelessIP
 
 tcp_drop_broadcast $wifi
@@ -41,7 +40,6 @@ open_tcp_server $wirelessIP $wirelessNet $SSH 10
 
 # Ethernet
 
-icmp_ping_throttle $wiredIP
 icmp_trusted $wiredIP
 
 tcp_drop_broadcast $ethernet

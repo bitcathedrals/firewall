@@ -51,6 +51,11 @@ function icmp_core {
 
   rule -A icmp_traffic_in  -p icmp -m state --state RELATED  -j ACCEPT
   rule -A icmp_traffic_out -p icmp -m state --state RELATED  -j ACCEPT;
+
+  rule -A icmp_traffic_out -p icmp --icmp-type echo-reply -j ACCEPT;
+  rule -A icmp_traffic_out -p icmp --icmp-type echo-request -j ACCEPT
+
+  rule -A icmp_traffic_in -p icmp --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
 }
 
 function icmp_block_broadcast {
@@ -84,24 +89,10 @@ function icmp_block_strange {
 
 function icmp_trusted {
   #
-  # allow outbound ping
+  # allow inbound ping
   #
 
-  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-request -j ACCEPT
-  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -j ACCEPT;
-};
-
-function icmp_ping_throttle {
   rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-request -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
-  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -m limit --limit 8\/second --limit-burst 24 -j ACCEPT
-
-  rule -A icmp_traffic_in -p icmp -d $1 --icmp-type echo-request -j DROP
-  rule -A icmp_traffic_out -p icmp -s $1 --icmp-type echo-reply -j DROP;
-};
-
-function icmp_ping_block {
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type echo-reply  -j DROP
-  rule -A icmp_filter_in -p icmp -d $1 --icmp-type echo-request  -j DROP;
 };
 
 function tcp_core {
