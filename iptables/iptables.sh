@@ -241,22 +241,41 @@ case $1 in
 
     configure_system
 
-    #
-    # loopback
-    #
-
-    rule -A INPUT -i lo -j ACCEPT
-    rule -A OUTPUT -o lo -j ACCEPT
-
-    #
-    # icmp protocol
-    #
+    # icmp
 
     rule -N icmp_filter_in
     rule -N icmp_filter_out
 
     rule -N icmp_traffic_in
     rule -N icmp_traffic_out
+
+    # tcp
+
+    rule -N tcp_filter_in
+    rule -N tcp_filter_out
+
+    rule -N tcp_con_in
+    rule -N tcp_con_out
+
+    # udp
+
+    rule -N udp_filter_in
+    rule -N udp_filter_out
+
+    rule -N udp_con_in
+    rule -N udp_con_out
+
+    rule -N udp_srv_in
+    rule -N udp_srv_out
+  ;;
+  "core")
+
+    # loopback
+
+    rule -A INPUT -i lo -j ACCEPT
+    rule -A OUTPUT -o lo -j ACCEPT
+
+    # icmp protocol
 
     rule -A INPUT  -p icmp -j icmp_filter_in
     rule -A OUTPUT -p icmp -j icmp_filter_out
@@ -270,18 +289,10 @@ case $1 in
     rule -A OUTPUT -p icmp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: ICMP no matching rule\""
     rule -A OUTPUT -p icmp -j DROP
 
-    #
     # tcp protocol
-    #
-
-    rule -N tcp_filter_in
-    rule -N tcp_filter_out
 
     rule -A INPUT  -p tcp -j tcp_filter_in
     rule -A OUTPUT -p tcp -j tcp_filter_out
-
-    rule -N tcp_con_in
-    rule -N tcp_con_out
 
     rule -A INPUT  -p tcp -j tcp_con_in
     rule -A OUTPUT -p tcp -j tcp_con_out
@@ -294,24 +305,14 @@ case $1 in
 
     rule -A INPUT -p tcp -m limit --limit 24\/minute -j NFLOG --nflog-group 2 --nflog-prefix "\"firewall: TCP no matching rule\""
     rule -A INPUT -p tcp -j DROP
-    #
-    # udp protocol
-    #
 
-    rule -N udp_filter_in
-    rule -N udp_filter_out
+    # udp protocol
 
     rule -A INPUT  -p udp -j udp_filter_in
     rule -A OUTPUT -p udp -j udp_filter_out
 
-    rule -N udp_con_in
-    rule -N udp_con_out
-
     rule -A INPUT  -p udp -j udp_con_in
     rule -A OUTPUT -p udp -j udp_con_out
-
-    rule -N udp_srv_in
-    rule -N udp_srv_out
 
     rule -A INPUT  -p udp -j udp_srv_in
     rule -A OUTPUT -p udp -j udp_srv_out
@@ -340,6 +341,10 @@ case $1 in
     rule -X udp_srv_out
   ;;
   "flush")
+    rule -F INPUT
+    rule -F OUTPUT
+    rule -F FORWARSD
+
     rule -t nat -F POSTROUTING
     rule -t nat -Z POSTROUTING
     rule -t nat -F PREROUTING
@@ -380,13 +385,9 @@ case $1 in
     rule -F udp_srv_out
     rule -Z udp_srv_out
   ;;
-  "wipe")
+  "reset")
     $0 flush
     $0 open
-
-    rule -F INPUT
-    rule -F OUTPUT
-    rule -F FORWARSD
   ;;
   "load")
     #
@@ -448,10 +449,12 @@ close   = default DROP policy
 init    = initialize the kernel and chains
 
 flush   = flush chains
+core    = load the core chains
 load    = load the system rules
-reload  = re-initialize the firewall
-
 dev     = load development rules
+
+reload  = reload the firewall
+
 rules   = list loaded rules
 
 start   = init, load, and set close policy
