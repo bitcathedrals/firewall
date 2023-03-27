@@ -115,17 +115,13 @@ function tcp_core {
   rule -A tcp_con_in -p tcp -m state --state RELATED -j ACCEPT
   rule -A tcp_con_out -p tcp -m state --state RELATED -j ACCEPT
 
-  rule -A tcp_con_in -p tcp -m conntrack --ctstatus SEEN_REPLY --tcp-flags SYN,ACK,FIN,RST ACK,SYN -j ACCEPT
-
-#  rule -A tcp_con_in -p tcp -d $1 --tcp-flags RST RST -j ACCEPT
-#  rule -A tcp_con_out -p tcp -s $1 --tcp-flags RST RST -j ACCEPT
-
-#  rule -A tcp_con_in -p tcp -d $1 --tcp-flags ACK ACK -j ACCEPT
-#  rule -A tcp_con_out -p tcp -s $1 --tcp-flags ACK ACK -j ACCEPT;
+  rule -A tcp_con_out -p tcp -m conntrack --ctstatus SEEN_REPLY -j ACCEPT
+  rule -A tcp_con_out -p tcp -m conntrack --ctstatus SEEN_REPLY --tcp-flags RST RST -j ACCEPT
 };
 
 function tcp_any_out {
   rule -A tcp_con_out -p tcp -s $1 -m state --state NEW -j ACCEPT;
+  rule -A tcp_con_in -p tcp -d $1 --tcp-flags SYN,ACK ACK -j ACCEPT;
 };
 
 function tcp_drop_broadcast {
