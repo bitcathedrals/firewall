@@ -7,7 +7,7 @@ wifi=wlan0
 ethernet=eth2
 VPN=tun0
 
-wirelessIP="192.68.10.169"
+wirelessIP="192.168.10.169"
 wirelessNet="192.168.10.0/24"
 
 wiredIP="192.168.24.7"
