@@ -116,12 +116,15 @@ function tcp_core {
   rule -A tcp_con_out -p tcp -m state --state RELATED -j ACCEPT
 
   rule -A tcp_con_out -p tcp -m conntrack --ctstatus SEEN_REPLY -j ACCEPT
+  rule -A tcp_con_in -p tcp -m conntrack --ctstatus SEEN_REPLY -j ACCEPT
+
   rule -A tcp_con_out -p tcp -m conntrack --ctstatus SEEN_REPLY --tcp-flags RST RST -j ACCEPT
+  rule -A tcp_con_out -p tcp -m conntrack --tcp-flags RST RST -j DROP
 };
 
 function tcp_any_out {
+  rule -A tcp_con_in -p tcp -d $1 -m state --state NEW --tcp-flags SYN,ACK ACK -j ACCEPT;
   rule -A tcp_con_out -p tcp -s $1 -m state --state NEW -j ACCEPT;
-  rule -A tcp_con_in -p tcp -d $1 --tcp-flags SYN,ACK ACK -j ACCEPT;
 };
 
 function tcp_drop_broadcast {
@@ -182,6 +185,7 @@ function open_tcp_server {
   rule -A tcp_filter_in -p tcp -d $1 --match multiport --dports $3 -m state --state NEW -m connlimit --connlimit-above $4 -j DROP
 
   rule -A tcp_srv_in -p tcp -d $1 -s $2 --match multiport --dports $3 -m state --state NEW -j ACCEPT
+  rule -A tcp_con_out -p tcp -s $1 -m state --state NEW --tcp-flags SYN,ACK ACK -j ACCEPT;
 }
 
 # $1 = source address network
