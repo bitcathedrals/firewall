@@ -119,7 +119,7 @@ function tcp_core {
   rule -A tcp_con_in -p tcp -m conntrack --ctstatus SEEN_REPLY -j ACCEPT
 
   rule -A tcp_con_out -p tcp -m conntrack --ctstatus SEEN_REPLY --tcp-flags RST RST -j ACCEPT
-  rule -A tcp_con_out -p tcp -m conntrack --tcp-flags RST RST -j DROP
+  rule -A tcp_con_out -p tcp --tcp-flags RST RST -j DROP
 };
 
 function tcp_any_out {
