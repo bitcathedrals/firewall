@@ -21,7 +21,7 @@ RSYNC=873
 IRC=6697
 RDP=3389
 
-WEB=80
+HTTPD="80"
 
 LO=`ifconfig | grep lo | head -n 1 | cut -d ':' -f 1`
 

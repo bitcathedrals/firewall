@@ -35,7 +35,7 @@ outbound \$wirelessIP tcp "$WEB"
 
 in_from \$wirelessIP tcp "$SSH" \$wirelessNet "5/1" 10
 in_from \$wirelessIP "{ udp , tcp }" $DOMAIN \$wirelessNet "50/1" 150
-in_from \$wirelessIP tcp $WEB \$wirelessNet "50/1" 150
+in_from \$wirelessIP tcp $HTTPD \$wirelessNet "50/1" 150
 
 # Wired
 
