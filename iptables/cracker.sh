@@ -15,7 +15,7 @@ wiredNet="192.168.24.0/24"
 
 SSH="ssh,6666"
 
-TOMCAT=8080
+PYTHON=8080
 
 # universal
 
@@ -38,7 +38,7 @@ udp_any_out $wirelessIP
 open_dhcp $wifi
 
 open_tcp_server $wirelessIP $wirelessNet $SSH 10
-open_tcp_server $wirelessIP $wirelessNet $TOMCAT 10
+open_tcp_server $wirelessIP $wirelessNet $PYTHON 10
 
 # Ethernet
 
@@ -51,4 +51,4 @@ udp_drop_broadcast $ethernet
 udp_any_out $wiredIP
 
 open_tcp_server $wiredIP $wiredNet $SSH 10
-open_tcp_server $wiredIP $wiredNet $TOMCAT 10
+open_tcp_server $wiredIP $wiredNet $PYTHON 10
