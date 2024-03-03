@@ -8,7 +8,7 @@ wifi=wlp4s0
 ethernet=enx0826ae3af2e5
 
 wirelessNet="192.168.10.0/24"
-wirelessIP="192.168.10.141"
+wirelessIP="192.168.10.246"
 
 wiredIP="192.168.24.4"
 wiredNet="192.168.24.0/24"

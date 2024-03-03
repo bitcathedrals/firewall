@@ -3,6 +3,8 @@
 macro intWifi iwx0
 macro intEthernet ure0
 
+macro_host wirelessIP spartan.wifi
+
 macro_network wireless spartan.local "192.168.10.0/24"
 macro_network wired spartan.wired "192.168.24.0/24"
 
@@ -13,7 +15,6 @@ macro_network wired spartan.wired "192.168.24.0/24"
 rpc_map `host_lookup gatekeeper.wired`
 
 macro_host gatekeeperWired "gatekeeper.wired"
-macro_host hadesWired "hades.wired"
 
 #
 # basics policy

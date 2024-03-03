@@ -6,6 +6,8 @@ macro intEthernet ure0
 macro_network wireless gatekeeper.local "192.168.10.0/24"
 macro_network wired gatekeeper.wired "192.168.24.0/24"
 
+macro_host wirelessIP "gatekeeper.wifi"
+
 macro_host crackerWired "cracker.wired"
 macro_host hadesWired "hades.wired"
 macro_host redboxWired "redbox.wired"
